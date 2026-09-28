@@ -1,3 +1,10 @@
+package com.alert360.controller.dto;
+
+import com.alert360.entity.enums.EnumTypeUrgence;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.Data;
+
 @Data
 public class SignalementRequestDto {
 
