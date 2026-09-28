@@ -7,4 +7,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface SignalementRepository extends JpaRepository<Signalement, Long> {
 
+    List<Signalement> findByTypeUrgence(EnumTypeUrgence typeUrgence);
+
 }
