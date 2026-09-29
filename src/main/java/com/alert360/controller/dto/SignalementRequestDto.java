@@ -31,4 +31,7 @@ public class SignalementRequestDto {
 
     @NotNull(message = "La catégorie est obligatoire")
     private Long categorieId;
+
+    @NotNull(message = "L'identifiant de la structure est obligatoire")
+    private Long idStructure;
 }
