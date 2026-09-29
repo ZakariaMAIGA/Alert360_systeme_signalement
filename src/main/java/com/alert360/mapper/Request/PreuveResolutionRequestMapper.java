@@ -8,13 +8,13 @@ import org.springframework.stereotype.Component;
 @Component
 public class PreuveResolutionRequestMapper {
 
-    public PreuveResolution toEntity(PreuveResolutionRequestDto dto, Signalement signalement){
-        if(dto==null) return  null;
-        PreuveResolution preuve = new PreuveResolution();
-        preuve.setTypePreuve(preuve.getTypePreuve());
-        preuve.setPhotoApresUrl(preuve.getPhotoApresUrl());
-        preuve.setRapportTexte(preuve.getRapportTexte());
+    public PreuveResolution toEntity(PreuveResolutionRequestDto dto, Signalement signalement) {
+        if (dto == null) return null;
 
+        PreuveResolution preuve = new PreuveResolution();
+        preuve.setTypePreuve(dto.getTypePreuve());
+        preuve.setPhotoApresUrl(dto.getPhotoApresUrl());
+        preuve.setRapportTexte(dto.getRapportTexte());
         preuve.setSignalement(signalement);
 
         return preuve;

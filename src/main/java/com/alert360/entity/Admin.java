@@ -16,7 +16,7 @@ import java.util.List;
 @Table(name = "admin")
 @Getter
 @Setter
-public class Admin extends Utilisateur {
+public class  Admin extends Utilisateur {
     @OneToMany(mappedBy = "auteur", fetch = FetchType.LAZY)
     private List<Actualite> actualitesPubliees = new ArrayList<>();
 

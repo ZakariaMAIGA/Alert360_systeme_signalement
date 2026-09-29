@@ -12,10 +12,13 @@ public interface CitoyenService {
     CitoyenResponseDto modifierCitoyen(Long idUtilisateur, CitoyenRequestDto dto);
 
     CitoyenResponseDto obtenirParId(Long idUtilisateur);
+    List<CitoyenResponseDto> obtenirParQuartier(String quartier);
 
     List<CitoyenResponseDto> obtenirTousLesCitoyens();
 
-    List<CitoyenResponseDto> obtenirParQuartier(String quartier);
+
+
+    CitoyenResponseDto ajouterBadgeCivique(Long idUtilisateur, String badgesCiviques);
 
     void supprimerCitoyen(Long idUtilisateur);
 }
