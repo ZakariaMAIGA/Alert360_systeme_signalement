@@ -19,4 +19,6 @@ public class StructureCompetenteRequestDto {
     private String zoneCouvertureGPS;
 
     private String telephoneUrgence;
+
+
 }

@@ -1,4 +1,4 @@
-package com.alert360.mapper;
+package com.alert360.mapper.Response;
 
 import com.alert360.controller.dto.SignalementResponseDto;
 import com.alert360.entity.Signalement;
@@ -27,17 +27,20 @@ public class SignalementResponseMapper {
         dto.setDateHeureAlerte(signalement.getDateHeureAlerte());
 
         if (signalement.getCitoyen() != null) {
-            dto.setCitoyenId(signalement.getCitoyen().getIdCitoyen());
+            dto.setCitoyenId(signalement.getCitoyen().getIdUtilisateur());
+            dto.setNomCompletCitoyen(signalement.getCitoyen().getPrenom() + " " + signalement.getCitoyen().getNom());
         }
 
         if (signalement.getCategorie() != null) {
             dto.setCategorieId(signalement.getCategorie().getIdCategorie());
+            dto.setNomCategorie(signalement.getCategorie().getNom());
         }
 
         if (signalement.getStructureAssignee() != null) {
             dto.setStructureAssigneeId(
                 signalement.getStructureAssignee().getIdStructure()
             );
+            dto.setNomStructureAssignee(signalement.getStructureAssignee().getNomStructure());
         }
 
         if (signalement.getPreuveResolution() != null) {

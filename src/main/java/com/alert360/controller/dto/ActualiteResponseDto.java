@@ -19,5 +19,6 @@ public class ActualiteResponseDto {
 
     private LocalDateTime datePublication;
 
-    private Long auteurId;
+    private Long idAdminAuteur;
+    private String nomAdminAuteur;
 }

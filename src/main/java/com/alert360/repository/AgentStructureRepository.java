@@ -13,7 +13,7 @@ public interface AgentStructureRepository extends JpaRepository<AgentStructure, 
 
     boolean existsByMatriculeAgent(String matriculeAgent);
 
-    List<AgentStructure> findByStructureIdStructure(Long idStructure);
+    List<AgentStructure>findByStructureIdStructure(Long idStructure);
 
     List<AgentStructure> findByStructureIdStructureAndEstResponsableTrue(Long idStructure);
 }

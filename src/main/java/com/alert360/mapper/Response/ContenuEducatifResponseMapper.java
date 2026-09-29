@@ -1,4 +1,4 @@
-package com.alert360.mapper;
+package com.alert360.mapper.Response;
 
 import com.alert360.controller.dto.ContenuEducatifResponseDto;
 import com.alert360.entity.ContenuEducatif;
@@ -19,7 +19,7 @@ public class ContenuEducatifResponseMapper {
         dto.setDatePublication(contenu.getDatePublication());
 
         if (contenu.getAuteur() != null) {
-            dto.setAuteurId(contenu.getAuteur().getIdAdmin());
+            dto.setAuteurId(contenu.getAuteur().getIdUtilisateur());
         }
 
         return dto;
