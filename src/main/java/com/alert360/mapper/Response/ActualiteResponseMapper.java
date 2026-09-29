@@ -1,4 +1,4 @@
-package com.alert360.mapper;
+package com.alert360.mapper.Response;
 
 import com.alert360.controller.dto.ActualiteResponseDto;
 import com.alert360.entity.Actualite;
@@ -19,7 +19,7 @@ public class ActualiteResponseMapper {
         dto.setDatePublication(actualite.getDatePublication());
 
         if (actualite.getAuteur() != null) {
-            dto.setAuteurId(actualite.getAuteur().getIdAdmin());
+            dto.setIdActualite(actualite.getAuteur().getIdUtilisateur());
         }
 
         return dto;

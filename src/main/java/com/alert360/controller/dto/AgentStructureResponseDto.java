@@ -1,7 +1,10 @@
 package com.alert360.controller.dto;
 
 
+import com.alert360.entity.enums.EnumRole;
 import lombok.Data;
+
+import java.time.LocalDateTime;
 
 @Data
 public class AgentStructureResponseDto {
@@ -11,7 +14,10 @@ public class AgentStructureResponseDto {
     private String telephone;
     private String email;
     private String matriculeAgent;
-    private Boolean estResponsable;
+    private boolean estResponsable;
+    private EnumRole role;
+    private Boolean estActif;
+    private LocalDateTime dateCreation;
     private Long idStructure;
     private String nomStructure;
 }

@@ -1,4 +1,4 @@
-package com.alert360.mapper;
+package com.alert360.mapper.Response;
 
 import com.alert360.controller.dto.StructureCompetenteResponseDto;
 import com.alert360.entity.StructureCompetente;
@@ -19,6 +19,8 @@ public class StructureCompetenteResponseMapper {
         dto.setTypeStructure(structure.getTypeStructure());
         dto.setZoneCouvertureGPS(structure.getZoneCouvertureGPS());
         dto.setTelephoneUrgence(structure.getTelephoneUrgence());
+
+        dto.setNombreAgents(structure.getAgents() != null ? structure.getAgents().size(): 0);
 
         return dto;
     }

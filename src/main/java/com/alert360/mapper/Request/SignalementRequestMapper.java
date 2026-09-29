@@ -4,7 +4,10 @@ import com.alert360.controller.dto.SignalementRequestDto;
 import com.alert360.entity.Categorie;
 import com.alert360.entity.Citoyen;
 import com.alert360.entity.Signalement;
+import com.alert360.entity.enums.EnumStatut;
 import org.springframework.stereotype.Component;
+
+import java.util.UUID;
 
 @Component
 public class SignalementRequestMapper {
@@ -24,7 +27,8 @@ public class SignalementRequestMapper {
         signalement.setLatitudeGPS(dto.getLatitudeGPS());
         signalement.setLongitudeGPS(dto.getLongitudeGPS());
         signalement.setRepereVisuel(dto.getRepereVisuel());
-
+        signalement.setStatut(EnumStatut.DECLARE);
+        signalement.setCodeTrackingUnique("ALT-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         signalement.setCitoyen(citoyen);
         signalement.setCategorie(categorie);
 

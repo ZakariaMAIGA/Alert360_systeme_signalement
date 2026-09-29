@@ -11,6 +11,12 @@ public class SignalementResponseDto {
 
     private Long idSignalement;
 
+    private String nomCompletCitoyen;
+
+    private String nomCategorie;
+
+    private String nomStructureAssignee;
+
     private String codeTrackingUnique;
 
     private EnumTypeUrgence typeUrgence;
