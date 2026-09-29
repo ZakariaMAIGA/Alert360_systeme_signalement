@@ -1,4 +1,4 @@
-package com.alert360.mapper;
+package com.alert360.mapper.Request;
 
 import com.alert360.controller.dto.StructureCompetenteRequestDto;
 import com.alert360.entity.StructureCompetente;

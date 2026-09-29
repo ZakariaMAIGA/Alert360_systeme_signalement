@@ -6,6 +6,7 @@ import com.alert360.controller.dto.CategorieResponseDto;
 import java.util.List;
 
 public interface CategorieService {
+
     CategorieResponseDto creerCategorie(CategorieRequestDto dto);
 
     CategorieResponseDto modifierCategorie(Long idCategorie, CategorieRequestDto dto);

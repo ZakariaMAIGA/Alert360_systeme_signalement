@@ -1,9 +1,10 @@
-package com.alert360.mapper;
+package com.alert360.mapper.Request;
 
 import com.alert360.controller.dto.SignalementRequestDto;
 import com.alert360.entity.Categorie;
 import com.alert360.entity.Citoyen;
 import com.alert360.entity.Signalement;
+import com.alert360.entity.StructureCompetente;
 import com.alert360.entity.enums.EnumStatut;
 import org.springframework.stereotype.Component;
 
@@ -15,7 +16,8 @@ public class SignalementRequestMapper {
     public Signalement toEntity(
             SignalementRequestDto dto,
             Citoyen citoyen,
-            Categorie categorie
+            Categorie categorie,
+            StructureCompetente structure
     ) {
 
         Signalement signalement = new Signalement();
@@ -31,6 +33,7 @@ public class SignalementRequestMapper {
         signalement.setCodeTrackingUnique("ALT-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         signalement.setCitoyen(citoyen);
         signalement.setCategorie(categorie);
+        signalement.setStructureAssignee(structure);
 
         return signalement;
     }
