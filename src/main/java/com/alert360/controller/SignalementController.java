@@ -20,24 +20,17 @@ public class SignalementController {
 
     private final SignalementService signalementService;
 
-
     // ==========================================================
-    // CREER UN SIGNALEMENT
+    // CREER UN SIGNALEMENT (Routage automatique PostGIS)
     // ==========================================================
 
     @PostMapping
     public ResponseEntity<SignalementResponseDto> creerSignalement(
             @Valid @RequestBody SignalementRequestDto dto
     ) {
-
-        SignalementResponseDto signalement =
-                signalementService.creerSignalement(dto);
-
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(signalement);
+        SignalementResponseDto signalement = signalementService.creerSignalement(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(signalement);
     }
-
 
     // ==========================================================
     // OBTENIR TOUS LES SIGNALEMENTS
@@ -45,13 +38,8 @@ public class SignalementController {
 
     @GetMapping
     public ResponseEntity<List<SignalementResponseDto>> obtenirTousLesSignalements() {
-
-        List<SignalementResponseDto> signalements =
-                signalementService.obtenirTousLesSignalements();
-
-        return ResponseEntity.ok(signalements);
+        return ResponseEntity.ok(signalementService.obtenirTousLesSignalements());
     }
-
 
     // ==========================================================
     // OBTENIR UN SIGNALEMENT PAR SON ID
@@ -61,16 +49,11 @@ public class SignalementController {
     public ResponseEntity<SignalementResponseDto> obtenirParId(
             @PathVariable Long idSignalement
     ) {
-
-        SignalementResponseDto signalement =
-                signalementService.obtenirParId(idSignalement);
-
-        return ResponseEntity.ok(signalement);
+        return ResponseEntity.ok(signalementService.obtenirParId(idSignalement));
     }
 
-
     // ==========================================================
-    // MODIFIER UN SIGNALEMENT
+    // MODIFIER UN SIGNALEMENT (Recalcule la structure si GPS modifié)
     // ==========================================================
 
     @PutMapping("/{idSignalement}")
@@ -78,16 +61,8 @@ public class SignalementController {
             @PathVariable Long idSignalement,
             @Valid @RequestBody SignalementRequestDto dto
     ) {
-
-        SignalementResponseDto signalement =
-                signalementService.modifierSignalement(
-                        idSignalement,
-                        dto
-                );
-
-        return ResponseEntity.ok(signalement);
+        return ResponseEntity.ok(signalementService.modifierSignalement(idSignalement, dto));
     }
-
 
     // ==========================================================
     // CHANGER LE STATUT
@@ -98,19 +73,11 @@ public class SignalementController {
             @PathVariable Long idSignalement,
             @RequestParam EnumStatut statut
     ) {
-
-        SignalementResponseDto signalement =
-                signalementService.changerStatut(
-                        idSignalement,
-                        statut
-                );
-
-        return ResponseEntity.ok(signalement);
+        return ResponseEntity.ok(signalementService.changerStatut(idSignalement, statut));
     }
 
-
     // ==========================================================
-    // ASSIGNER UNE STRUCTURE COMPÉTENTE
+    // ASSIGNER / RÉASSIGNER MANUELLEMENT UNE STRUCTURE COMPÉTENTE
     // ==========================================================
 
     @PatchMapping("/{idSignalement}/assigner")
@@ -118,16 +85,8 @@ public class SignalementController {
             @PathVariable Long idSignalement,
             @RequestParam Long idStructure
     ) {
-
-        SignalementResponseDto signalement =
-                signalementService.assignerStructure(
-                        idSignalement,
-                        idStructure
-                );
-
-        return ResponseEntity.ok(signalement);
+        return ResponseEntity.ok(signalementService.assignerStructure(idSignalement, idStructure));
     }
-
 
     // ==========================================================
     // OBTENIR LES SIGNALEMENTS D'UN CITOYEN
@@ -137,13 +96,8 @@ public class SignalementController {
     public ResponseEntity<List<SignalementResponseDto>> obtenirParCitoyen(
             @PathVariable Long idCitoyen
     ) {
-
-        List<SignalementResponseDto> signalements =
-                signalementService.obtenirParCitoyen(idCitoyen);
-
-        return ResponseEntity.ok(signalements);
+        return ResponseEntity.ok(signalementService.obtenirParCitoyen(idCitoyen));
     }
-
 
     // ==========================================================
     // OBTENIR LES SIGNALEMENTS D'UNE STRUCTURE
@@ -153,13 +107,8 @@ public class SignalementController {
     public ResponseEntity<List<SignalementResponseDto>> obtenirParStructure(
             @PathVariable Long idStructure
     ) {
-
-        List<SignalementResponseDto> signalements =
-                signalementService.obtenirParStructure(idStructure);
-
-        return ResponseEntity.ok(signalements);
+        return ResponseEntity.ok(signalementService.obtenirParStructure(idStructure));
     }
-
 
     // ==========================================================
     // OBTENIR LES SIGNALEMENTS PAR STATUT
@@ -169,13 +118,8 @@ public class SignalementController {
     public ResponseEntity<List<SignalementResponseDto>> obtenirParStatut(
             @PathVariable EnumStatut statut
     ) {
-
-        List<SignalementResponseDto> signalements =
-                signalementService.obtenirParStatut(statut);
-
-        return ResponseEntity.ok(signalements);
+        return ResponseEntity.ok(signalementService.obtenirParStatut(statut));
     }
-
 
     // ==========================================================
     // SUPPRIMER UN SIGNALEMENT
@@ -185,9 +129,7 @@ public class SignalementController {
     public ResponseEntity<Void> supprimerSignalement(
             @PathVariable Long idSignalement
     ) {
-
         signalementService.supprimerSignalement(idSignalement);
-
         return ResponseEntity.noContent().build();
     }
 }

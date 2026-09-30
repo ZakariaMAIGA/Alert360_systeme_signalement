@@ -55,7 +55,7 @@ public class ContenuEducatifController {
     ) {
 
         ContenuEducatifResponseDto contenu =
-                contenuEducatifService.obetnirParId(idContenu);
+                contenuEducatifService.obtenirParId(idContenu);
 
         return ResponseEntity.ok(contenu);
     }

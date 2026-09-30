@@ -18,10 +18,10 @@ public class SignalementRequestDto {
     @NotBlank(message = "La description est obligatoire")
     private String description;
 
-    @NotNull(message = "La latitude est obligatoire")
+    @NotNull(message = "La latitude GPS est obligatoire")
     private Double latitudeGPS;
 
-    @NotNull(message = "La longitude est obligatoire")
+    @NotNull(message = "La longitude GPS est obligatoire")
     private Double longitudeGPS;
 
     private String repereVisuel;
@@ -31,7 +31,4 @@ public class SignalementRequestDto {
 
     @NotNull(message = "La catégorie est obligatoire")
     private Long categorieId;
-
-    @NotNull(message = "L'identifiant de la structure est obligatoire")
-    private Long idStructure;
 }

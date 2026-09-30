@@ -4,9 +4,12 @@ import com.alert360.entity.enums.EnumStatut;
 import com.alert360.entity.enums.EnumTypeUrgence;
 import jakarta.persistence.*;
 import lombok.*;
+import org.locationtech.jts.geom.Point;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "signalements")
@@ -20,7 +23,8 @@ public class Signalement {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long idSignalement;
 
-    @Column(unique = true, nullable = false)
+    // Généré automatiquement avant l'insertion en BDD (ex: ALT-8A2F9B1C)
+    @Column(unique = true, nullable = false, updatable = false)
     private String codeTrackingUnique;
 
     @Enumerated(EnumType.STRING)
@@ -34,18 +38,16 @@ public class Signalement {
     private String photoAvantUrl;
     private String audioUrl;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String description;
 
-    @Column(nullable = false)
-    private Double latitudeGPS;
-
-    @Column(nullable = false)
-    private Double longitudeGPS;
+    // 📍 Point géospatial PostGIS (Longitude, Latitude) SRID 4326
+    @Column(columnDefinition = "geometry(Point,4326)", nullable = false)
+    private Point localisation;
 
     private String repereVisuel;
 
-    @Column(nullable = false)
+    @Column(nullable = false, updatable = false)
     private LocalDateTime dateHeureAlerte;
 
     // --- RELATIONS ---
@@ -58,6 +60,7 @@ public class Signalement {
     @JoinColumn(name = "categorie_id", nullable = false)
     private Categorie categorie;
 
+    // Assignée automatiquement par PostGIS dans le Service
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "structure_id")
     private StructureCompetente structureAssignee;
@@ -66,13 +69,19 @@ public class Signalement {
     @JoinColumn(name = "preuve_resolution_id")
     private PreuveResolution preuveResolution;
 
-    // --- RELATION BIDIRECTIONNELLE ---
-
     @OneToMany(mappedBy = "signalementOrigine", fetch = FetchType.LAZY)
     private List<ActionCitoyenne> actionsDerivees = new ArrayList<>();
+
+    // --- AUTOMATISATIONS BASE DE DONNÉES ---
 
     @PrePersist
     protected void onCreate() {
         this.dateHeureAlerte = LocalDateTime.now();
+        if (this.statut == null) {
+            this.statut = EnumStatut.DECLARE;
+        }
+        if (this.codeTrackingUnique == null || this.codeTrackingUnique.isEmpty()) {
+            this.codeTrackingUnique = "ALT-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        }
     }
 }

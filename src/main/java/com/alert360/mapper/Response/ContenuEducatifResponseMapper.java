@@ -8,6 +8,9 @@ import org.springframework.stereotype.Component;
 public class ContenuEducatifResponseMapper {
 
     public ContenuEducatifResponseDto toDto(ContenuEducatif contenu) {
+        if (contenu == null) {
+            return null;
+        }
 
         ContenuEducatifResponseDto dto = new ContenuEducatifResponseDto();
 
@@ -18,8 +21,14 @@ public class ContenuEducatifResponseMapper {
         dto.setMediaUrl(contenu.getMediaUrl());
         dto.setDatePublication(contenu.getDatePublication());
 
+        // Extraction de l'ID et du nom complet de l'administrateur auteur
         if (contenu.getAuteur() != null) {
             dto.setAuteurId(contenu.getAuteur().getIdUtilisateur());
+
+            String prenom = contenu.getAuteur().getPrenom() != null ? contenu.getAuteur().getPrenom() : "";
+            String nom = contenu.getAuteur().getNom() != null ? contenu.getAuteur().getNom() : "";
+
+            dto.setNomAuteur((prenom + " " + nom).trim());
         }
 
         return dto;

@@ -2,46 +2,43 @@ package com.alert360.controller.dto;
 
 import com.alert360.entity.enums.EnumStatut;
 import com.alert360.entity.enums.EnumTypeUrgence;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class SignalementResponseDto {
 
     private Long idSignalement;
-
-    private String nomCompletCitoyen;
-
-    private String nomCategorie;
-
-    private String nomStructureAssignee;
-
     private String codeTrackingUnique;
-
     private EnumTypeUrgence typeUrgence;
-
     private EnumStatut statut;
-
-    private String photoAvantUrl;
-
-    private String audioUrl;
-
     private String description;
 
+    // Coordonnées GPS réexpédiées de façon standard
     private Double latitudeGPS;
-
     private Double longitudeGPS;
 
     private String repereVisuel;
-
+    private String photoAvantUrl;
+    private String audioUrl;
     private LocalDateTime dateHeureAlerte;
 
+    // Informations du citoyen émetteur
     private Long citoyenId;
+    private String citoyenNomComplet;
 
+    // Informations de la catégorie
     private Long categorieId;
+    private String categorieNom;
 
+    // Informations de la structure assignée automatiquement par PostGIS
     private Long structureAssigneeId;
-
-    private Long preuveResolutionId;
+    private String structureAssigneeNom;
 }

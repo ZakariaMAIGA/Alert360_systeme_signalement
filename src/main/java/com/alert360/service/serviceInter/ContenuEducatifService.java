@@ -11,7 +11,7 @@ public interface ContenuEducatifService {
 
     ContenuEducatifResponseDto modifierContenu(Long idContenu, ContenuEducatifRequestDto dto);
 
-    ContenuEducatifResponseDto obetnirParId(Long idContenu);
+    ContenuEducatifResponseDto obtenirParId(Long idContenu);
 
     List<ContenuEducatifResponseDto> obtenirTousLesContenus();
 
