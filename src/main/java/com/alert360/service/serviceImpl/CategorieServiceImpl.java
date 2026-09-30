@@ -6,6 +6,7 @@ import com.alert360.mapper.Request.CategorieRequestMapper;
 import com.alert360.mapper.Response.CategorieResponseMapper;
 import com.alert360.repository.CategorieRepository;
 import com.alert360.service.serviceInter.CategorieService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -54,7 +55,7 @@ public class CategorieServiceImpl implements CategorieService {
         Categorie categorie =
                 categorieRepository.findById(idCategorie)
                         .orElseThrow(() ->
-                                new RuntimeException(
+                                new EntityNotFoundException(
                                         "Catégorie introuvable avec l'id : "
                                                 + idCategorie
                                 )
@@ -84,7 +85,7 @@ public class CategorieServiceImpl implements CategorieService {
         Categorie categorie =
                 categorieRepository.findById(idCategorie)
                         .orElseThrow(() ->
-                                new RuntimeException(
+                                new EntityNotFoundException(
                                         "Catégorie introuvable avec l'id : "
                                                 + idCategorie
                                 )
@@ -95,9 +96,9 @@ public class CategorieServiceImpl implements CategorieService {
     }
 
 
-    // =========================
+
     // OBTENIR TOUTES LES CATEGORIES
-    // =========================
+
     @Override
     public List<CategorieResponseDto> obtenirToutesLesCategories() {
 
@@ -108,9 +109,8 @@ public class CategorieServiceImpl implements CategorieService {
     }
 
 
-    // =========================
+
     // SUPPRIMER UNE CATEGORIE
-    // =========================
     @Override
     public void supprimerCategorie(
             Long idCategorie
@@ -119,7 +119,7 @@ public class CategorieServiceImpl implements CategorieService {
         // Vérifier que la catégorie existe
         if (!categorieRepository.existsById(idCategorie)) {
 
-            throw new RuntimeException(
+            throw new EntityNotFoundException(
                     "Catégorie introuvable avec l'id : "
                             + idCategorie
             );

@@ -1,5 +1,6 @@
 package com.alert360.controller;
 
+import com.alert360.controller.dto.APIResponse;
 import com.alert360.controller.dto.CategorieRequestDto;
 import com.alert360.controller.dto.CategorieResponseDto;
 import com.alert360.service.serviceInter.CategorieService;
@@ -18,25 +19,27 @@ public class CategorieController {
 
    private final CategorieService categorieService;
 
-    // =========================
+
     // CREER UNE CATEGORIE
-    // =========================
+
     @PostMapping
-    public ResponseEntity<CategorieResponseDto> creerCategorie(
+    public ResponseEntity<APIResponse<Void>> creerCategorie(
             @Valid @RequestBody CategorieRequestDto dto
     ) {
 
         CategorieResponseDto response =
                 categorieService.creerCategorie(dto);
 
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(response);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new APIResponse<>(
+                        true,
+                        "Categorie créé avec succès.",
+                        null));
     }
 
-    // =========================
+
     // OBTENIR TOUTES LES CATEGORIES
-    // =========================
+
     @GetMapping
     public ResponseEntity<List<CategorieResponseDto>> obtenirToutesLesCategories() {
 
