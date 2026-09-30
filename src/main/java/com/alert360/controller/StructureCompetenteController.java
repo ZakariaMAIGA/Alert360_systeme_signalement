@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/structures-competentes")
+@RequestMapping("/api/structures")
 @RequiredArgsConstructor
 public class StructureCompetenteController {
 
