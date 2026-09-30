@@ -14,6 +14,7 @@ import com.alert360.repository.CitoyenRepository;
 import com.alert360.repository.SignalementRepository;
 import com.alert360.repository.StructureCompetenteRepository;
 import com.alert360.service.serviceInter.SignalementService;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -48,17 +49,18 @@ public class SignalementServiceImpl implements SignalementService {
         Citoyen citoyen = citoyenRepository
                 .findById(dto.getCitoyenId())
                 .orElseThrow(() ->
-                        new RuntimeException(
+                        new EntityNotFoundException(
                                 "Citoyen introuvable avec l'ID : "
                                         + dto.getCitoyenId()
                         )
                 );
 
+
         // 2. Vérifier que la catégorie existe
         Categorie categorie = categorieRepository
                 .findById(dto.getCategorieId())
                 .orElseThrow(() ->
-                        new RuntimeException(
+                        new EntityNotFoundException(
                                 "Catégorie introuvable avec l'ID : "
                                         + dto.getCategorieId()
                         )
@@ -72,7 +74,7 @@ public class SignalementServiceImpl implements SignalementService {
             structure = structureCompetenteRepository
                     .findById(dto.getIdStructure())
                     .orElseThrow(() ->
-                            new RuntimeException(
+                            new EntityNotFoundException(
                                     "Structure compétente introuvable avec l'ID : "
                                             + dto.getIdStructure()
                             )
@@ -102,9 +104,9 @@ public class SignalementServiceImpl implements SignalementService {
     }
 
 
-    // ==========================================================
+
     // MODIFIER UN SIGNALEMENT
-    // ==========================================================
+
 
     @Override
     public SignalementResponseDto modifierSignalement(
@@ -117,7 +119,7 @@ public class SignalementServiceImpl implements SignalementService {
                 signalementRepository
                         .findById(idSignalement)
                         .orElseThrow(() ->
-                                new RuntimeException(
+                                new EntityNotFoundException(
                                         "Signalement introuvable avec l'ID : "
                                                 + idSignalement
                                 )

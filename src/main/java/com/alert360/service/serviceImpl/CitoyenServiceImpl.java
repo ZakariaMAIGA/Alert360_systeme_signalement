@@ -7,6 +7,7 @@ import com.alert360.mapper.Request.CitoyenRequestMapper;
 import com.alert360.mapper.Response.CitoyenResponseMapper;
 import com.alert360.repository.CitoyenRepository;
 import com.alert360.service.serviceInter.CitoyenService;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -33,7 +34,7 @@ public class CitoyenServiceImpl implements CitoyenService {
     public CitoyenResponseDto modifierCitoyen(Long idUtilisateur, CitoyenRequestDto dto) {
 
         Citoyen citoyen = citoyenRepository.findById(idUtilisateur)
-                .orElseThrow(() -> new RuntimeException("Citoyen introuvable avec l'ID : " +idUtilisateur));
+                .orElseThrow(() -> new EntityNotFoundException("Citoyen introuvable avec l'ID : " +idUtilisateur));
         citoyen.setNom(dto.getNom());
         citoyen.setPrenom(dto.getPrenom());
         citoyen.setTelephone(dto.getTelephone());
@@ -50,7 +51,7 @@ public class CitoyenServiceImpl implements CitoyenService {
     @Override
     public CitoyenResponseDto obtenirParId(Long idUtilisateur) {
         Citoyen citoyen = citoyenRepository.findById(idUtilisateur)
-                .orElseThrow(()-> new RuntimeException("Citoyen introuvable avec l'ID : "+idUtilisateur));
+                .orElseThrow(()-> new EntityNotFoundException("Citoyen introuvable avec l'ID : "+idUtilisateur));
         return responseMapper.toDto(citoyen);
 
     }
@@ -73,7 +74,7 @@ public class CitoyenServiceImpl implements CitoyenService {
     public CitoyenResponseDto ajouterBadgeCivique(Long idUtilisateur, String badgesCiviques) {
 
         Citoyen citoyen = citoyenRepository.findById(idUtilisateur)
-                .orElseThrow(()-> new RuntimeException("Citoyen introuvable avec l'ID : "+idUtilisateur));
+                .orElseThrow(()-> new EntityNotFoundException("Citoyen introuvable avec l'ID : "+idUtilisateur));
 
         if (!citoyen.getBadgesCiviques().contains(badgesCiviques)) {
             citoyen.getBadgesCiviques().add(badgesCiviques);
@@ -86,7 +87,7 @@ public class CitoyenServiceImpl implements CitoyenService {
     @Override
     public void supprimerCitoyen(Long idUtilisateur) {
     if(!citoyenRepository.existsById(idUtilisateur)){
-        throw new RuntimeException("Citoyen introuvable avec l'ID : " + idUtilisateur);
+        throw new EntityNotFoundException("Citoyen introuvable avec l'ID : " + idUtilisateur);
     }
 
     citoyenRepository.deleteById(idUtilisateur);
