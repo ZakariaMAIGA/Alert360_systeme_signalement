@@ -8,6 +8,9 @@ import org.springframework.stereotype.Component;
 public class SignalementResponseMapper {
 
     public SignalementResponseDto toDto(Signalement signalement) {
+        if (signalement == null) {
+            return null;
+        }
 
         SignalementResponseDto dto = new SignalementResponseDto();
 
@@ -19,34 +22,30 @@ public class SignalementResponseMapper {
         dto.setPhotoAvantUrl(signalement.getPhotoAvantUrl());
         dto.setAudioUrl(signalement.getAudioUrl());
         dto.setDescription(signalement.getDescription());
-
-        dto.setLatitudeGPS(signalement.getLatitudeGPS());
-        dto.setLongitudeGPS(signalement.getLongitudeGPS());
         dto.setRepereVisuel(signalement.getRepereVisuel());
-
         dto.setDateHeureAlerte(signalement.getDateHeureAlerte());
+
+        //Extraction des coordonnées GPS à partir de l'objet PostGIS Point (SRID 4326)
+        if (signalement.getLocalisation() != null) {
+            dto.setLatitudeGPS(signalement.getLocalisation().getY());  // Y = Latitude
+            dto.setLongitudeGPS(signalement.getLocalisation().getX()); // X = Longitude
+        }
+
+        // --- RELATIONS ---
 
         if (signalement.getCitoyen() != null) {
             dto.setCitoyenId(signalement.getCitoyen().getIdUtilisateur());
-            dto.setNomCompletCitoyen(signalement.getCitoyen().getPrenom() + " " + signalement.getCitoyen().getNom());
+            dto.setCitoyenNomComplet(signalement.getCitoyen().getPrenom() + " " + signalement.getCitoyen().getNom());
         }
 
         if (signalement.getCategorie() != null) {
             dto.setCategorieId(signalement.getCategorie().getIdCategorie());
-            dto.setNomCategorie(signalement.getCategorie().getNom());
+            dto.setCategorieNom(signalement.getCategorie().getNom());
         }
 
         if (signalement.getStructureAssignee() != null) {
-            dto.setStructureAssigneeId(
-                signalement.getStructureAssignee().getIdStructure()
-            );
-            dto.setNomStructureAssignee(signalement.getStructureAssignee().getNomStructure());
-        }
-
-        if (signalement.getPreuveResolution() != null) {
-            dto.setPreuveResolutionId(
-                signalement.getPreuveResolution().getIdPreuve()
-            );
+            dto.setStructureAssigneeId(signalement.getStructureAssignee().getIdStructure());
+            dto.setStructureAssigneeNom(signalement.getStructureAssignee().getNomStructure());
         }
 
         return dto;

@@ -3,6 +3,7 @@ package com.alert360.entity;
 import com.alert360.entity.enums.EnumTypeStructure;
 import jakarta.persistence.*;
 import lombok.*;
+import org.locationtech.jts.geom.Geometry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,8 +30,9 @@ public class StructureCompetente {
     @Column(nullable = false)
     private EnumTypeStructure typeStructure;
 
-    @Column(columnDefinition = "TEXT")
-    private String zoneCouvertureGPS;
+    //PostGIS SRID 4326 pour stocker les polygones/périmètres d'intervention
+    @Column(columnDefinition = "geometry(Geometry,4326)")
+    private Geometry zoneCouvertureGPS;
 
     private String telephoneUrgence;
 

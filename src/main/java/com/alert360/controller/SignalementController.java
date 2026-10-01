@@ -1,6 +1,5 @@
 package com.alert360.controller;
 
-import com.alert360.controller.dto.APIResponse;
 import com.alert360.controller.dto.SignalementRequestDto;
 import com.alert360.controller.dto.SignalementResponseDto;
 import com.alert360.entity.enums.EnumStatut;
@@ -21,224 +20,116 @@ public class SignalementController {
 
     private final SignalementService signalementService;
 
-
-    // CREER UN SIGNALEMENT
+    // ==========================================================
+    // CREER UN SIGNALEMENT (Routage automatique PostGIS)
+    // ==========================================================
 
     @PostMapping
-    public ResponseEntity<APIResponse<Void>> creerSignalement(
+    public ResponseEntity<SignalementResponseDto> creerSignalement(
             @Valid @RequestBody SignalementRequestDto dto
     ) {
-
-        SignalementResponseDto signalement =
-                signalementService.creerSignalement(dto);
-
-         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new APIResponse<>(
-                        true,
-                        "Signalement créé avec succès.",
-                        null));
+        SignalementResponseDto signalement = signalementService.creerSignalement(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(signalement);
     }
 
-
-
+    // ==========================================================
     // OBTENIR TOUS LES SIGNALEMENTS
-
+    // ==========================================================
 
     @GetMapping
-    public ResponseEntity<APIResponse<List<SignalementResponseDto>>> obtenirTousLesSignalements() {
-
-        List<SignalementResponseDto> signalements =
-                signalementService.obtenirTousLesSignalements();
-
-        return ResponseEntity.ok(
-                new APIResponse<>(
-                        true,
-                        "Liste des siganlements récupérée avec succès.",
-                        signalements));
-
+    public ResponseEntity<List<SignalementResponseDto>> obtenirTousLesSignalements() {
+        return ResponseEntity.ok(signalementService.obtenirTousLesSignalements());
     }
 
-
-
+    // ==========================================================
     // OBTENIR UN SIGNALEMENT PAR SON ID
+    // ==========================================================
 
     @GetMapping("/{idSignalement}")
-    public ResponseEntity<APIResponse<SignalementResponseDto>> obtenirParId(
+    public ResponseEntity<SignalementResponseDto> obtenirParId(
             @PathVariable Long idSignalement
     ) {
-
-        SignalementResponseDto signalement =
-                signalementService.obtenirParId(idSignalement);
-
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(new APIResponse<>(
-                                true,
-                                "Signalement trouve avec success",
-                                signalement
-                        )
-                );
-
+        return ResponseEntity.ok(signalementService.obtenirParId(idSignalement));
     }
 
-
-
-    // MODIFIER UN SIGNALEMENT
-
+    // ==========================================================
+    // MODIFIER UN SIGNALEMENT (Recalcule la structure si GPS modifié)
+    // ==========================================================
 
     @PutMapping("/{idSignalement}")
-    public ResponseEntity<APIResponse<SignalementResponseDto>> modifierSignalement(
+    public ResponseEntity<SignalementResponseDto> modifierSignalement(
             @PathVariable Long idSignalement,
             @Valid @RequestBody SignalementRequestDto dto
     ) {
-
-        SignalementResponseDto signalement =
-                signalementService.modifierSignalement(
-                        idSignalement,
-                        dto
-                );
-
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(new APIResponse<>(
-                                true,
-                                "Signalement modifié avec success",
-                                signalement
-                        )
-                );
-
+        return ResponseEntity.ok(signalementService.modifierSignalement(idSignalement, dto));
     }
 
-
+    // ==========================================================
     // CHANGER LE STATUT
-
+    // ==========================================================
 
     @PatchMapping("/{idSignalement}/statut")
-    public ResponseEntity<APIResponse<SignalementResponseDto>> changerStatut(
+    public ResponseEntity<SignalementResponseDto> changerStatut(
             @PathVariable Long idSignalement,
             @RequestParam EnumStatut statut
     ) {
-
-        SignalementResponseDto signalement =
-                signalementService.changerStatut(
-                        idSignalement,
-                        statut
-                );
-
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(new APIResponse<>(
-                                true,
-                                "Le statut du signalement est changé trouve avec success",
-                                signalement
-                        )
-                );
+        return ResponseEntity.ok(signalementService.changerStatut(idSignalement, statut));
     }
 
-
-
-    // ASSIGNER UNE STRUCTURE COMPÉTENTE
+    // ==========================================================
+    // ASSIGNER / RÉASSIGNER MANUELLEMENT UNE STRUCTURE COMPÉTENTE
+    // ==========================================================
 
     @PatchMapping("/{idSignalement}/assigner")
-    public ResponseEntity<APIResponse<SignalementResponseDto>> assignerStructure(
+    public ResponseEntity<SignalementResponseDto> assignerStructure(
             @PathVariable Long idSignalement,
             @RequestParam Long idStructure
     ) {
-
-        SignalementResponseDto signalement =
-                signalementService.assignerStructure(
-                        idSignalement,
-                        idStructure
-                );
-
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(new APIResponse<>(
-                                true,
-                                "Le signalement a été assigné avec success",
-                                null
-                        )
-                );
+        return ResponseEntity.ok(signalementService.assignerStructure(idSignalement, idStructure));
     }
 
-
+    // ==========================================================
     // OBTENIR LES SIGNALEMENTS D'UN CITOYEN
+    // ==========================================================
 
     @GetMapping("/citoyen/{idCitoyen}")
-    public ResponseEntity<APIResponse<List<SignalementResponseDto>>> obtenirParCitoyen(
+    public ResponseEntity<List<SignalementResponseDto>> obtenirParCitoyen(
             @PathVariable Long idCitoyen
     ) {
-
-        List<SignalementResponseDto> signalements =
-                signalementService.obtenirParCitoyen(idCitoyen);
-
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(new APIResponse<>(
-                                true,
-                                "Les signalement sont trouvés avec succès",
-                                signalements
-                        )
-                );
+        return ResponseEntity.ok(signalementService.obtenirParCitoyen(idCitoyen));
     }
 
-
-
+    // ==========================================================
     // OBTENIR LES SIGNALEMENTS D'UNE STRUCTURE
-
+    // ==========================================================
 
     @GetMapping("/structure/{idStructure}")
-    public ResponseEntity<APIResponse<List<SignalementResponseDto>>> obtenirParStructure(
+    public ResponseEntity<List<SignalementResponseDto>> obtenirParStructure(
             @PathVariable Long idStructure
     ) {
-
-        List<SignalementResponseDto> signalements =
-                signalementService.obtenirParStructure(idStructure);
-
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(new APIResponse<>(
-                                true,
-                                "Les signalement sont trouvés avec succès",
-                                signalements
-                        )
-                );
+        return ResponseEntity.ok(signalementService.obtenirParStructure(idStructure));
     }
 
-
-
+    // ==========================================================
     // OBTENIR LES SIGNALEMENTS PAR STATUT
-
+    // ==========================================================
 
     @GetMapping("/statut/{statut}")
-    public ResponseEntity<APIResponse<List<SignalementResponseDto>>> obtenirParStatut(
+    public ResponseEntity<List<SignalementResponseDto>> obtenirParStatut(
             @PathVariable EnumStatut statut
     ) {
-
-        List<SignalementResponseDto> signalements =
-                signalementService.obtenirParStatut(statut);
-
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(new APIResponse<>(
-                                true,
-                                "Les signalement par statuts sont trouvés avec succès",
-                                signalements
-                        )
-                );
+        return ResponseEntity.ok(signalementService.obtenirParStatut(statut));
     }
 
-
-
+    // ==========================================================
     // SUPPRIMER UN SIGNALEMENT
-
+    // ==========================================================
 
     @DeleteMapping("/{idSignalement}")
-    public ResponseEntity<APIResponse<Void>> supprimerSignalement(
+    public ResponseEntity<Void> supprimerSignalement(
             @PathVariable Long idSignalement
     ) {
-
         signalementService.supprimerSignalement(idSignalement);
-
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(new APIResponse<>(
-                                true,
-                                "Le signalement a été supprimé avec success",
-                                null
-                        )
-                );
+        return ResponseEntity.noContent().build();
     }
 }

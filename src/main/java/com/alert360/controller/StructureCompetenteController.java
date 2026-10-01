@@ -2,7 +2,6 @@ package com.alert360.controller;
 
 import com.alert360.controller.dto.StructureCompetenteRequestDto;
 import com.alert360.controller.dto.StructureCompetenteResponseDto;
-
 import com.alert360.entity.enums.EnumTypeStructure;
 import com.alert360.service.serviceInter.StructureCompetenteService;
 import jakarta.validation.Valid;
@@ -27,7 +26,6 @@ public class StructureCompetenteController {
     public ResponseEntity<StructureCompetenteResponseDto> creerStructure(
             @Valid @RequestBody StructureCompetenteRequestDto dto
     ) {
-
         StructureCompetenteResponseDto response =
                 structureCompetenteService.creerStructure(dto);
 
@@ -41,7 +39,6 @@ public class StructureCompetenteController {
     // =========================
     @GetMapping
     public ResponseEntity<List<StructureCompetenteResponseDto>> obtenirToutesLesStructures() {
-
         List<StructureCompetenteResponseDto> structures =
                 structureCompetenteService.obtenirToutesLesStructures();
 
@@ -55,7 +52,6 @@ public class StructureCompetenteController {
     public ResponseEntity<StructureCompetenteResponseDto> obtenirStructureParId(
             @PathVariable Long idStructure
     ) {
-
         StructureCompetenteResponseDto structure =
                 structureCompetenteService.obtenirParId(idStructure);
 
@@ -69,9 +65,9 @@ public class StructureCompetenteController {
     public ResponseEntity<List<StructureCompetenteResponseDto>> obtenirParType(
             @PathVariable EnumTypeStructure typeStructure
     ) {
-
+        // Correction de la méthode du service (obtenirPartype -> obtenirParType)
         List<StructureCompetenteResponseDto> structures =
-                structureCompetenteService.obtenirPartype(typeStructure);
+                structureCompetenteService.obtenirParType(typeStructure);
 
         return ResponseEntity.ok(structures);
     }
@@ -84,7 +80,6 @@ public class StructureCompetenteController {
             @PathVariable Long idStructure,
             @Valid @RequestBody StructureCompetenteRequestDto dto
     ) {
-
         StructureCompetenteResponseDto structure =
                 structureCompetenteService.modifierStructure(
                         idStructure,
@@ -101,8 +96,8 @@ public class StructureCompetenteController {
     public ResponseEntity<Void> supprimerStructure(
             @PathVariable Long idStructure
     ) {
-
-        structureCompetenteService.supprimerStructre(idStructure);
+        // Correction de la méthode du service (supprimerStructre -> supprimerStructure)
+        structureCompetenteService.supprimerStructure(idStructure);
 
         return ResponseEntity.noContent().build();
     }
