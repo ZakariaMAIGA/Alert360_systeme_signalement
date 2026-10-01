@@ -16,7 +16,9 @@ public interface StructureCompetenteService {
 
     List<StructureCompetenteResponseDto> obtenirToutesLesStructures();
 
-    List<StructureCompetenteResponseDto> obtenirPartype(EnumTypeStructure typeStructure);
+    // Correction du nommage : obtenirPartype -> obtenirParType
+    List<StructureCompetenteResponseDto> obtenirParType(EnumTypeStructure typeStructure);
 
-    void supprimerStructre(Long idStructure);
+    // Correction du nommage : supprimerStructre -> supprimerStructure
+    void supprimerStructure(Long idStructure);
 }

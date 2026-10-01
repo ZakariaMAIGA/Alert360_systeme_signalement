@@ -10,15 +10,16 @@ public class StructureCompetenteRequestDto {
 
     @NotBlank(message = "Le nom de la structure est obligatoire")
     private String nomStructure;
-     @NotBlank(message = "Le quartier est obligatoire")
+
+    @NotBlank(message = "Le quartier est obligatoire")
     private String quartier;
 
     @NotNull(message = "Le type de structure est obligatoire")
     private EnumTypeStructure typeStructure;
 
+    // Représentation textuelle WKT du polygone PostGIS (ex: "POLYGON((longitude latitude, ...))")
+    @NotBlank(message = "La zone de couverture GPS (format WKT) est obligatoire")
     private String zoneCouvertureGPS;
 
     private String telephoneUrgence;
-
-
 }
