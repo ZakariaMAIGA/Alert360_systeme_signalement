@@ -15,10 +15,10 @@ import com.alert360.repository.SignalementRepository;
 import com.alert360.repository.StructureCompetenteRepository;
 import com.alert360.service.serviceInter.SignalementService;
 import com.alert360.util.GeometryUtil;
-import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Point;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 
@@ -50,10 +50,10 @@ public class SignalementServiceImpl implements SignalementService {
         Categorie categorie = categorieRepository.findById(dto.getCategorieId())
                 .orElseThrow(() -> new RuntimeException("Catégorie introuvable avec l'ID : " + dto.getCategorieId()));
 
-        // 3. Transformer le DTO en Entity
+        // 3. Transformer le DTO en Entity (inclut la conversion de la géolocalisation PostGIS)
         Signalement signalement = requestMapper.toEntity(dto, citoyen, categorie);
 
-        // 4.Routage spatial automatique PostGIS : recherche de la structure la plus proche
+        // 4. Routage spatial automatique PostGIS : recherche de la structure la plus proche
         if (signalement.getLocalisation() != null) {
             structureCompetenteRepository.findNearestStructure(signalement.getLocalisation())
                     .ifPresent(signalement::setStructureAssignee);
@@ -77,34 +77,25 @@ public class SignalementServiceImpl implements SignalementService {
         Signalement signalement = signalementRepository.findById(idSignalement)
                 .orElseThrow(() -> new RuntimeException("Signalement introuvable avec l'ID : " + idSignalement));
 
-        // 2. Mettre à jour les données de base
-        signalement.setTypeUrgence(dto.getTypeUrgence());
-        signalement.setPhotoAvantUrl(dto.getPhotoAvantUrl());
-        signalement.setAudioUrl(dto.getAudioUrl());
-        signalement.setDescription(dto.getDescription());
-        signalement.setRepereVisuel(dto.getRepereVisuel());
-
-        // 3. Mettre à jour la localisation géospatiale PostGIS
-        Point nouvelleLocalisation = GeometryUtil.createPoint(dto.getLatitudeGPS(), dto.getLongitudeGPS());
-        signalement.setLocalisation(nouvelleLocalisation);
-
-        // 4. Mettre à jour le citoyen
+        // 2. Vérifier l'existence des relations associées
         Citoyen citoyen = citoyenRepository.findById(dto.getCitoyenId())
                 .orElseThrow(() -> new RuntimeException("Citoyen introuvable avec l'ID : " + dto.getCitoyenId()));
-        signalement.setCitoyen(citoyen);
 
-        // 5. Mettre à jour la catégorie
         Categorie categorie = categorieRepository.findById(dto.getCategorieId())
                 .orElseThrow(() -> new RuntimeException("Catégorie introuvable avec l'ID : " + dto.getCategorieId()));
-        signalement.setCategorie(categorie);
 
-        // 6. Réévaluer automatiquement l'assignation de la structure selon la nouvelle position
-        if (nouvelleLocalisation != null) {
-            structureCompetenteRepository.findNearestStructure(nouvelleLocalisation)
+        // 3. Mettre à jour l'entité via le mapper
+        requestMapper.updateEntityFromDto(signalement, dto, citoyen, categorie);
+
+        // 4. Réévaluer automatiquement l'assignation de la structure selon la nouvelle position
+        if (signalement.getLocalisation() != null) {
+            structureCompetenteRepository.findNearestStructure(signalement.getLocalisation())
                     .ifPresent(signalement::setStructureAssignee);
+        } else {
+            signalement.setStructureAssignee(null);
         }
 
-        // 7. Enregistrer les modifications
+        // 5. Enregistrer les modifications
         Signalement signalementModifie = signalementRepository.save(signalement);
 
         return responseMapper.toDto(signalementModifie);
@@ -152,6 +143,7 @@ public class SignalementServiceImpl implements SignalementService {
     // ==========================================================
 
     @Override
+    @Transactional(readOnly = true)
     public SignalementResponseDto obtenirParId(Long idSignalement) {
 
         Signalement signalement = signalementRepository.findById(idSignalement)
@@ -165,6 +157,7 @@ public class SignalementServiceImpl implements SignalementService {
     // ==========================================================
 
     @Override
+    @Transactional(readOnly = true)
     public List<SignalementResponseDto> obtenirTousLesSignalements() {
 
         return signalementRepository.findAll()
@@ -178,6 +171,7 @@ public class SignalementServiceImpl implements SignalementService {
     // ==========================================================
 
     @Override
+    @Transactional(readOnly = true)
     public List<SignalementResponseDto> obtenirParCitoyen(Long idCitoyen) {
 
         return signalementRepository.findByCitoyen_IdUtilisateur(idCitoyen)
@@ -191,6 +185,7 @@ public class SignalementServiceImpl implements SignalementService {
     // ==========================================================
 
     @Override
+    @Transactional(readOnly = true)
     public List<SignalementResponseDto> obtenirParStructure(Long idStructure) {
 
         return signalementRepository.findByStructureAssignee_IdStructure(idStructure)
@@ -204,6 +199,7 @@ public class SignalementServiceImpl implements SignalementService {
     // ==========================================================
 
     @Override
+    @Transactional(readOnly = true)
     public List<SignalementResponseDto> obtenirParStatut(EnumStatut statut) {
 
         return signalementRepository.findByStatut(statut)

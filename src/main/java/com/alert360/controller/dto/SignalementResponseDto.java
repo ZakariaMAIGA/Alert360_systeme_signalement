@@ -2,6 +2,7 @@ package com.alert360.controller.dto;
 
 import com.alert360.entity.enums.EnumStatut;
 import com.alert360.entity.enums.EnumTypeUrgence;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,13 +22,15 @@ public class SignalementResponseDto {
     private EnumStatut statut;
     private String description;
 
-    // Coordonnées GPS réexpédiées de façon standard
+    // Coordonnées GPS réexpédiées depuis le Point PostGIS
     private Double latitudeGPS;
     private Double longitudeGPS;
 
     private String repereVisuel;
     private String photoAvantUrl;
     private String audioUrl;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime dateHeureAlerte;
 
     // Informations du citoyen émetteur
@@ -38,7 +41,7 @@ public class SignalementResponseDto {
     private Long categorieId;
     private String categorieNom;
 
-    // Informations de la structure assignée automatiquement par PostGIS
+    // Informations de la structure assignée (peut être null si aucune structure à proximité)
     private Long structureAssigneeId;
     private String structureAssigneeNom;
 }

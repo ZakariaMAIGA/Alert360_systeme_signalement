@@ -1,6 +1,7 @@
 package com.alert360.mapper.Response;
 
 import com.alert360.controller.dto.SignalementResponseDto;
+import com.alert360.entity.Citoyen;
 import com.alert360.entity.Signalement;
 import org.springframework.stereotype.Component;
 
@@ -12,42 +13,40 @@ public class SignalementResponseMapper {
             return null;
         }
 
-        SignalementResponseDto dto = new SignalementResponseDto();
+        // Extraction sécurisée des coordonnées GPS PostGIS (Y = Latitude, X = Longitude)
+        Double latitude = (signalement.getLocalisation() != null) ? signalement.getLocalisation().getY() : null;
+        Double longitude = (signalement.getLocalisation() != null) ? signalement.getLocalisation().getX() : null;
 
-        dto.setIdSignalement(signalement.getIdSignalement());
-        dto.setCodeTrackingUnique(signalement.getCodeTrackingUnique());
-        dto.setTypeUrgence(signalement.getTypeUrgence());
-        dto.setStatut(signalement.getStatut());
-
-        dto.setPhotoAvantUrl(signalement.getPhotoAvantUrl());
-        dto.setAudioUrl(signalement.getAudioUrl());
-        dto.setDescription(signalement.getDescription());
-        dto.setRepereVisuel(signalement.getRepereVisuel());
-        dto.setDateHeureAlerte(signalement.getDateHeureAlerte());
-
-        //Extraction des coordonnées GPS à partir de l'objet PostGIS Point (SRID 4326)
-        if (signalement.getLocalisation() != null) {
-            dto.setLatitudeGPS(signalement.getLocalisation().getY());  // Y = Latitude
-            dto.setLongitudeGPS(signalement.getLocalisation().getX()); // X = Longitude
-        }
-
-        // --- RELATIONS ---
-
+        // Formater le nom complet du citoyen en évitant les valeurs "null"
+        String citoyenNomComplet = null;
         if (signalement.getCitoyen() != null) {
-            dto.setCitoyenId(signalement.getCitoyen().getIdUtilisateur());
-            dto.setCitoyenNomComplet(signalement.getCitoyen().getPrenom() + " " + signalement.getCitoyen().getNom());
+            Citoyen c = signalement.getCitoyen();
+            String prenom = c.getPrenom() != null ? c.getPrenom() : "";
+            String nom = c.getNom() != null ? c.getNom() : "";
+            citoyenNomComplet = (prenom + " " + nom).trim();
         }
 
-        if (signalement.getCategorie() != null) {
-            dto.setCategorieId(signalement.getCategorie().getIdCategorie());
-            dto.setCategorieNom(signalement.getCategorie().getNom());
-        }
-
-        if (signalement.getStructureAssignee() != null) {
-            dto.setStructureAssigneeId(signalement.getStructureAssignee().getIdStructure());
-            dto.setStructureAssigneeNom(signalement.getStructureAssignee().getNomStructure());
-        }
-
-        return dto;
+        return SignalementResponseDto.builder()
+                .idSignalement(signalement.getIdSignalement())
+                .codeTrackingUnique(signalement.getCodeTrackingUnique())
+                .typeUrgence(signalement.getTypeUrgence())
+                .statut(signalement.getStatut())
+                .description(signalement.getDescription())
+                .latitudeGPS(latitude)
+                .longitudeGPS(longitude)
+                .repereVisuel(signalement.getRepereVisuel())
+                .photoAvantUrl(signalement.getPhotoAvantUrl())
+                .audioUrl(signalement.getAudioUrl())
+                .dateHeureAlerte(signalement.getDateHeureAlerte())
+                // Citoyen
+                .citoyenId(signalement.getCitoyen() != null ? signalement.getCitoyen().getIdUtilisateur() : null)
+                .citoyenNomComplet(citoyenNomComplet)
+                // Catégorie
+                .categorieId(signalement.getCategorie() != null ? signalement.getCategorie().getIdCategorie() : null)
+                .categorieNom(signalement.getCategorie() != null ? signalement.getCategorie().getNom() : null)
+                // Structure assignée
+                .structureAssigneeId(signalement.getStructureAssignee() != null ? signalement.getStructureAssignee().getIdStructure() : null)
+                .structureAssigneeNom(signalement.getStructureAssignee() != null ? signalement.getStructureAssignee().getNomStructure() : null)
+                .build();
     }
 }

@@ -10,30 +10,47 @@ import org.springframework.stereotype.Component;
 @Component
 public class SignalementRequestMapper {
 
+    /**
+     * Convertit un SignalementRequestDto en entité Signalement.
+     */
     public Signalement toEntity(SignalementRequestDto dto, Citoyen citoyen, Categorie categorie) {
         if (dto == null) {
             return null;
         }
 
         Signalement signalement = new Signalement();
-
-        signalement.setTypeUrgence(dto.getTypeUrgence());
-        signalement.setDescription(dto.getDescription());
-        signalement.setPhotoAvantUrl(dto.getPhotoAvantUrl());
-        signalement.setAudioUrl(dto.getAudioUrl());
-        signalement.setRepereVisuel(dto.getRepereVisuel());
-
-        //Conversion des coordonnées GPS décimales en Point PostGIS (SRID 4326)
-        signalement.setLocalisation(GeometryUtil.createPoint(dto.getLatitudeGPS(), dto.getLongitudeGPS()));
-
-        // Relations obligatoires injectées depuis le service
-        signalement.setCitoyen(citoyen);
-        signalement.setCategorie(categorie);
-
-        // Note: codeTrackingUnique, dateHeureAlerte et statut (DECLARE)
-        // sont gérés automatiquement via @PrePersist dans l'entité Signalement.
-        // La structureAssignee sera quant à elle déterminée automatiquement par PostGIS dans le Service.
+        updateEntityFromDto(signalement, dto, citoyen, categorie);
 
         return signalement;
+    }
+
+    /**
+     * Met à jour une entité Signalement existante avec les données du DTO.
+     */
+    public void updateEntityFromDto(Signalement entity, SignalementRequestDto dto, Citoyen citoyen, Categorie categorie) {
+        if (entity == null || dto == null) {
+            return;
+        }
+
+        entity.setTypeUrgence(dto.getTypeUrgence());
+        entity.setDescription(dto.getDescription());
+        entity.setPhotoAvantUrl(dto.getPhotoAvantUrl());
+        entity.setAudioUrl(dto.getAudioUrl());
+        entity.setRepereVisuel(dto.getRepereVisuel());
+
+        // Conversion sécurisée des coordonnées GPS en Point PostGIS (SRID 4326)
+        if (dto.getLatitudeGPS() != null && dto.getLongitudeGPS() != null) {
+            entity.setLocalisation(GeometryUtil.createPoint(dto.getLatitudeGPS(), dto.getLongitudeGPS()));
+        } else {
+            entity.setLocalisation(null);
+        }
+
+        // Relations associées
+        if (citoyen != null) {
+            entity.setCitoyen(citoyen);
+        }
+        if (categorie != null) {
+            entity.setCategorie(categorie);
+        }
     }
 }

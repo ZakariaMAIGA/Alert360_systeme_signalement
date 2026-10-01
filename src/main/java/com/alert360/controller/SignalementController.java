@@ -15,7 +15,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/signalements")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "*", allowedHeaders = "*", methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.PATCH, RequestMethod.DELETE})
 public class SignalementController {
 
     private final SignalementService signalementService;
