@@ -9,11 +9,16 @@ import java.util.Optional;
 
 @Repository
 public interface AgentStructureRepository extends JpaRepository<AgentStructure, Long> {
+
     Optional<AgentStructure> findByMatriculeAgent(String matriculeAgent);
 
     boolean existsByMatriculeAgent(String matriculeAgent);
 
-    List<AgentStructure>findByStructureIdStructure(Long idStructure);
+    boolean existsByEmail(String email);
+
+    Optional<AgentStructure> findByEmail(String email);
+
+    List<AgentStructure> findByStructureIdStructure(Long idStructure);
 
     List<AgentStructure> findByStructureIdStructureAndEstResponsableTrue(Long idStructure);
 }

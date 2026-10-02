@@ -23,7 +23,7 @@ public class AgentStructureController {
     public ResponseEntity<AgentStructureResponseDto> creerAgent(
             @PathVariable Long idStructure,
             @Valid @RequestBody AgentStructureRequestDto dto) {
-        AgentStructureResponseDto nouveauAgent = agentStructureService.creerAgent(dto, idStructure);
+        AgentStructureResponseDto nouveauAgent = agentStructureService.creerAgent(dto);
         return new ResponseEntity<>(nouveauAgent, HttpStatus.CREATED);
     }
 

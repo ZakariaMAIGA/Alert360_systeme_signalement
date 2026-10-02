@@ -57,7 +57,7 @@ public class AuthService {
         if (user instanceof Citoyen citoyen) {
             builder.quartier(citoyen.getQuartier());
         } else if (user instanceof AgentStructure agent) {
-            builder.estResponsable(agent.isEstResponsable());
+            builder.estResponsable(agent.getEstResponsable());
             if (agent.getStructure() != null) {
                 builder.idStructure(agent.getStructure().getIdStructure());
             }
