@@ -1,5 +1,6 @@
 package com.alert360.entity;
 
+import com.alert360.entity.enums.EnumTypeStructure;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -23,6 +24,11 @@ public class Categorie {
 
     @Column(nullable = false, unique = true)
     private String nom;
+
+    // --- CHAMP À AJOUTER ---
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type_structure_cible")
+    private EnumTypeStructure typeStructureCible;
 
     // --- RELATION BIDIRECTIONNELLE ---
 

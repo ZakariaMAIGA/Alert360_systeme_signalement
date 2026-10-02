@@ -14,8 +14,6 @@ import com.alert360.repository.CitoyenRepository;
 import com.alert360.repository.SignalementRepository;
 import com.alert360.repository.StructureCompetenteRepository;
 import com.alert360.service.serviceInter.SignalementService;
-import com.alert360.util.GeometryUtil;
-import org.locationtech.jts.geom.Point;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -36,7 +34,7 @@ public class SignalementServiceImpl implements SignalementService {
     private final SignalementResponseMapper responseMapper;
 
     // ==========================================================
-    // CREER UN SIGNALEMENT (AVEC ROUTAGE POSTGIS AUTOMATIQUE)
+    // CREER UN SIGNALEMENT (AVEC ROUTAGE POSTGIS CATEGORIEL)
     // ==========================================================
 
     @Override
@@ -53,9 +51,11 @@ public class SignalementServiceImpl implements SignalementService {
         // 3. Transformer le DTO en Entity (inclut la conversion de la géolocalisation PostGIS)
         Signalement signalement = requestMapper.toEntity(dto, citoyen, categorie);
 
-        // 4. Routage spatial automatique PostGIS : recherche de la structure la plus proche
-        if (signalement.getLocalisation() != null) {
-            structureCompetenteRepository.findNearestStructure(signalement.getLocalisation())
+        // 4. Routage spatial intelligent : Filtré par TYPE DE STRUCTURE (SOMAGEP, EDM_SA, MAIRIE...) + PROXIMITÉ
+        if (signalement.getLocalisation() != null && categorie.getTypeStructureCible() != null) {
+            String typeCible = categorie.getTypeStructureCible().name();
+
+            structureCompetenteRepository.findNearestStructureByType(signalement.getLocalisation(), typeCible)
                     .ifPresent(signalement::setStructureAssignee);
         }
 
@@ -87,10 +87,15 @@ public class SignalementServiceImpl implements SignalementService {
         // 3. Mettre à jour l'entité via le mapper
         requestMapper.updateEntityFromDto(signalement, dto, citoyen, categorie);
 
-        // 4. Réévaluer automatiquement l'assignation de la structure selon la nouvelle position
-        if (signalement.getLocalisation() != null) {
-            structureCompetenteRepository.findNearestStructure(signalement.getLocalisation())
-                    .ifPresent(signalement::setStructureAssignee);
+        // 4. Réévaluer automatiquement l'assignation selon le type de la nouvelle catégorie et la position
+        if (signalement.getLocalisation() != null && categorie.getTypeStructureCible() != null) {
+            String typeCible = categorie.getTypeStructureCible().name();
+
+            structureCompetenteRepository.findNearestStructureByType(signalement.getLocalisation(), typeCible)
+                    .ifPresentOrElse(
+                            signalement::setStructureAssignee,
+                            () -> signalement.setStructureAssignee(null)
+                    );
         } else {
             signalement.setStructureAssignee(null);
         }
