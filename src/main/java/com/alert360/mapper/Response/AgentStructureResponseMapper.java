@@ -1,9 +1,5 @@
 package com.alert360.mapper.Response;
 
-
-
-
-
 import com.alert360.controller.dto.AgentStructureResponseDto;
 import com.alert360.entity.AgentStructure;
 import org.springframework.stereotype.Component;
@@ -16,24 +12,20 @@ public class AgentStructureResponseMapper {
             return null;
         }
 
-        AgentStructureResponseDto dto = new AgentStructureResponseDto();
-        dto.setIdUtilisateur(entity.getIdUtilisateur());
-        dto.setNom(entity.getNom());
-        dto.setPrenom(entity.getPrenom());
-        dto.setTelephone(entity.getTelephone());
-        dto.setEmail(entity.getEmail());
-        dto.setMatriculeAgent(entity.getMatriculeAgent());
-        dto.setEstResponsable(entity.isEstResponsable());
-        dto.setRole(entity.getRole());
-        dto.setEstActif(entity.getEstActif());
-        dto.setDateCreation(entity.getDateCreation());
-
-        // Extraction sécurisée des informations de la structure liée
-        if (entity.getStructure() != null) {
-            dto.setIdStructure(entity.getStructure().getIdStructure());
-            dto.setNomStructure(entity.getStructure().getNomStructure());
-        }
-
-        return dto;
+        // Utilisation du Builder du DTO pour une instanciation propre et lisible
+        return AgentStructureResponseDto.builder()
+                .idUtilisateur(entity.getIdUtilisateur())
+                .nom(entity.getNom())
+                .prenom(entity.getPrenom())
+                .telephone(entity.getTelephone())
+                .email(entity.getEmail())
+                .matriculeAgent(entity.getMatriculeAgent())
+                .estResponsable(entity.getEstResponsable()) // Corrigé : utilise getEstResponsable() (type Boolean) au lieu de isEstResponsable()
+                .role(entity.getRole())
+                .estActif(entity.getEstActif())
+                .dateCreation(entity.getDateCreation())
+                .idStructure(entity.getStructure() != null ? entity.getStructure().getIdStructure() : null)
+                .nomStructure(entity.getStructure() != null ? entity.getStructure().getNomStructure() : null)
+                .build();
     }
 }

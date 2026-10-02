@@ -1,9 +1,6 @@
 package com.alert360.mapper.Request;
 
-
-
 import com.alert360.controller.dto.AgentStructureRequestDto;
-import com.alert360.controller.dto.AgentStructureUpdateDto;
 import com.alert360.entity.AgentStructure;
 import com.alert360.entity.StructureCompetente;
 import com.alert360.entity.enums.EnumRole;
@@ -14,7 +11,9 @@ public class AgentStructureRequestMapper {
 
     public AgentStructure toEntity(AgentStructureRequestDto dto, StructureCompetente structure) {
 
-        if (dto == null) return null;
+        if (dto == null) {
+            return null;
+        }
 
         AgentStructure agent = new AgentStructure();
 
@@ -25,15 +24,16 @@ public class AgentStructureRequestMapper {
         agent.setMotDePasse(dto.getMotDePasse());
         agent.setMatriculeAgent(dto.getMatriculeAgent());
 
-        // Un agent créé par cette opération
-        // n'est pas le responsable de la structure.
-        agent.setEstResponsable(false);
+        // 1. Définition du statut Responsable (lit la valeur du DTO, false par défaut si non spécifié)
+        agent.setEstResponsable(Boolean.TRUE.equals(dto.getEstResponsable()));
 
+        // 2. Un agent créé par l'administration ou par un responsable est ACTIF par défaut
+        agent.setEstActif(true);
+
+        // 3. Attribution du rôle et de la structure associée
         agent.setRole(EnumRole.STRUCTURE);
-        agent.setEstActif(false);
         agent.setStructure(structure);
 
         return agent;
     }
-
 }
