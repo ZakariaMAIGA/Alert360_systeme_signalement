@@ -33,13 +33,17 @@ public interface StructureCompetenteRepository extends JpaRepository<StructureCo
 
     /**
      * Recherche la structure la plus proche du point GPS reçu
-     * (basé sur la distance jusqu'au périmètre zone_couverturegps).
+     * FILTRÉE par son type de structure (ex: SOMAGEP, EDM_SA, MAIRIE...).
      */
     @Query(value = """
         SELECT s.* FROM structures_competentes s
         WHERE s.zone_couverturegps IS NOT NULL
-        ORDER BY ST_Distance(s.zone_couverturegps, :point) ASC
+          AND s.type_structure = :typeStructure
+        ORDER BY s.zone_couverturegps <-> :point
         LIMIT 1
         """, nativeQuery = true)
-    Optional<StructureCompetente> findNearestStructure(@Param("point") Point point);
+    Optional<StructureCompetente> findNearestStructureByType(
+            @Param("point") Point point,
+            @Param("typeStructure") String typeStructure
+    );
 }
