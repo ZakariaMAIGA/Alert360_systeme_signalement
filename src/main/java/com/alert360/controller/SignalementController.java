@@ -1,5 +1,6 @@
 package com.alert360.controller;
 
+import com.alert360.controller.dto.AssignationSignalementRequestDto;
 import com.alert360.controller.dto.SignalementRequestDto;
 import com.alert360.controller.dto.SignalementResponseDto;
 import com.alert360.entity.enums.EnumStatut;
@@ -89,6 +90,18 @@ public class SignalementController {
     }
 
     // ==========================================================
+    // ASSIGNER UN AGENT DE TERRAIN (RÉSERVÉ AU RESPONSABLE)
+    // ==========================================================
+
+    @PatchMapping("/{idSignalement}/assigner-agent")
+    public ResponseEntity<SignalementResponseDto> assignerAgent(
+            @PathVariable Long idSignalement,
+            @Valid @RequestBody AssignationSignalementRequestDto dto
+    ) {
+        return ResponseEntity.ok(signalementService.assignerAgent(idSignalement, dto));
+    }
+
+    // ==========================================================
     // OBTENIR LES SIGNALEMENTS D'UN CITOYEN
     // ==========================================================
 
@@ -108,6 +121,17 @@ public class SignalementController {
             @PathVariable Long idStructure
     ) {
         return ResponseEntity.ok(signalementService.obtenirParStructure(idStructure));
+    }
+
+    // ==========================================================
+    // OBTENIR LES SIGNALEMENTS ASSIGNÉS À UN AGENT TERRAIN
+    // ==========================================================
+
+    @GetMapping("/agent/{idAgent}")
+    public ResponseEntity<List<SignalementResponseDto>> obtenirParAgentAssigne(
+            @PathVariable Long idAgent
+    ) {
+        return ResponseEntity.ok(signalementService.obtenirParAgentAssigne(idAgent));
     }
 
     // ==========================================================

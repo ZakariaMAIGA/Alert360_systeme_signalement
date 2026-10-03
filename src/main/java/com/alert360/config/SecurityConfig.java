@@ -76,14 +76,25 @@ public class SecurityConfig {
                         // 3. SIGNALEMENTS (/api/signalements)
                         .requestMatchers(HttpMethod.GET, "/api/signalements", "/api/signalements/**")
                         .hasAnyAuthority("CITOYEN", "ROLE_CITOYEN", "STRUCTURE", "ROLE_STRUCTURE", "ADMIN", "ROLE_ADMIN")
+
                         .requestMatchers(HttpMethod.POST, "/api/signalements", "/api/signalements/**")
                         .hasAnyAuthority("CITOYEN", "ROLE_CITOYEN", "ADMIN", "ROLE_ADMIN")
+
                         .requestMatchers(HttpMethod.PUT, "/api/signalements", "/api/signalements/**")
                         .hasAnyAuthority("CITOYEN", "ROLE_CITOYEN", "ADMIN", "ROLE_ADMIN")
-                        .requestMatchers(HttpMethod.PATCH, "/api/signalements/*/statut")
+
+                        // Changement de statut (ex: /api/signalements/123/statut ou /api/signalements/statut)
+                        .requestMatchers(HttpMethod.PATCH, "/api/signalements/*/statut", "/api/signalements/statut/**")
                         .hasAnyAuthority("STRUCTURE", "ROLE_STRUCTURE", "ADMIN", "ROLE_ADMIN")
-                        .requestMatchers(HttpMethod.PATCH, "/api/signalements/*/assigner")
+
+                        // Assignation de structure (ex: /api/signalements/123/assigner ou /api/signalements/assigner/**)
+                        .requestMatchers(HttpMethod.PATCH, "/api/signalements/*/assigner", "/api/signalements/assigner/**")
                         .hasAnyAuthority("STRUCTURE", "ROLE_STRUCTURE", "ADMIN", "ROLE_ADMIN")
+
+                        // Assignation d'agent (ex: /api/signalements/123/assigner-agent ou /api/signalements/assigner-agent/**)
+                        .requestMatchers(HttpMethod.PATCH, "/api/signalements/*/assigner-agent", "/api/signalements/assigner-agent/**")
+                        .hasAnyAuthority("STRUCTURE", "ROLE_STRUCTURE", "ADMIN", "ROLE_ADMIN")
+
                         .requestMatchers(HttpMethod.DELETE, "/api/signalements", "/api/signalements/**")
                         .hasAnyAuthority("ADMIN", "ROLE_ADMIN")
 
@@ -113,7 +124,7 @@ public class SecurityConfig {
                         .hasAnyAuthority("STRUCTURE", "ROLE_STRUCTURE", "ADMIN", "ROLE_ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/citoyens", "/api/citoyens/**")
                         .hasAnyAuthority("CITOYEN", "ROLE_CITOYEN", "ADMIN", "ROLE_ADMIN")
-                        .requestMatchers(HttpMethod.PATCH, "/api/citoyens/*/badges")
+                        .requestMatchers(HttpMethod.PATCH, "/api/citoyens/*/badges", "/api/citoyens/badges/**")
                         .hasAnyAuthority("ADMIN", "ROLE_ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/citoyens", "/api/citoyens/**")
                         .hasAnyAuthority("ADMIN", "ROLE_ADMIN")
