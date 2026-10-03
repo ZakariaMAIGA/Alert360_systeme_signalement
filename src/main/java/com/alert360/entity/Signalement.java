@@ -60,6 +60,10 @@ public class Signalement {
     @JoinColumn(name = "categorie_id", nullable = false)
     private Categorie categorie;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "agent_assigne_id")
+    private AgentStructure agentAssigne;
+
     // Assignée automatiquement par PostGIS dans le Service
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "structure_id")

@@ -26,6 +26,8 @@ public class PreuveResolution {
     @Column(columnDefinition = "TEXT")
     private String rapportTexte;
 
+
+
     private LocalDateTime dateResolution;
 
     // --- RELATION BIDIRECTIONNELLE ---

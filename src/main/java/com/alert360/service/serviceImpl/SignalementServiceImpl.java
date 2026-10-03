@@ -1,22 +1,31 @@
 package com.alert360.service.serviceImpl;
 
+import com.alert360.controller.dto.AssignationSignalementRequestDto;
 import com.alert360.controller.dto.SignalementRequestDto;
 import com.alert360.controller.dto.SignalementResponseDto;
+import com.alert360.entity.AgentStructure;
 import com.alert360.entity.Categorie;
 import com.alert360.entity.Citoyen;
 import com.alert360.entity.Signalement;
 import com.alert360.entity.StructureCompetente;
+import com.alert360.entity.Utilisateur;
+import com.alert360.entity.enums.EnumRole;
 import com.alert360.entity.enums.EnumStatut;
 import com.alert360.mapper.Request.SignalementRequestMapper;
 import com.alert360.mapper.Response.SignalementResponseMapper;
+import com.alert360.repository.AgentStructureRepository;
 import com.alert360.repository.CategorieRepository;
 import com.alert360.repository.CitoyenRepository;
 import com.alert360.repository.SignalementRepository;
 import com.alert360.repository.StructureCompetenteRepository;
+import com.alert360.repository.UtilisateurRepository;
 import com.alert360.service.serviceInter.SignalementService;
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 
@@ -29,29 +38,37 @@ public class SignalementServiceImpl implements SignalementService {
     private final CitoyenRepository citoyenRepository;
     private final CategorieRepository categorieRepository;
     private final StructureCompetenteRepository structureCompetenteRepository;
+    private final AgentStructureRepository agentStructureRepository;
+    private final UtilisateurRepository utilisateurRepository;
 
     private final SignalementRequestMapper requestMapper;
     private final SignalementResponseMapper responseMapper;
 
+    /**
+     * Helper pour extraire l'utilisateur actuellement authentifié via SecurityContext (JWT)
+     */
+    private Utilisateur getUtilisateurConnecte() {
+        String identifier = SecurityContextHolder.getContext().getAuthentication().getName();
+        return utilisateurRepository.findByTelephone(identifier)
+                .or(() -> utilisateurRepository.findByEmail(identifier))
+                .orElseThrow(() -> new EntityNotFoundException("Utilisateur introuvable avec l'identifiant : " + identifier));
+    }
+
     // ==========================================================
-    // CREER UN SIGNALEMENT (AVEC ROUTAGE POSTGIS CATEGORIEL)
+    // CREER UN SIGNALEMENT
     // ==========================================================
 
     @Override
     public SignalementResponseDto creerSignalement(SignalementRequestDto dto) {
 
-        // 1. Vérifier que le citoyen existe
         Citoyen citoyen = citoyenRepository.findById(dto.getCitoyenId())
-                .orElseThrow(() -> new RuntimeException("Citoyen introuvable avec l'ID : " + dto.getCitoyenId()));
+                .orElseThrow(() -> new EntityNotFoundException("Citoyen introuvable avec l'ID : " + dto.getCitoyenId()));
 
-        // 2. Vérifier que la catégorie existe
         Categorie categorie = categorieRepository.findById(dto.getCategorieId())
-                .orElseThrow(() -> new RuntimeException("Catégorie introuvable avec l'ID : " + dto.getCategorieId()));
+                .orElseThrow(() -> new EntityNotFoundException("Catégorie introuvable avec l'ID : " + dto.getCategorieId()));
 
-        // 3. Transformer le DTO en Entity (inclut la conversion de la géolocalisation PostGIS)
         Signalement signalement = requestMapper.toEntity(dto, citoyen, categorie);
 
-        // 4. Routage spatial intelligent : Filtré par TYPE DE STRUCTURE (SOMAGEP, EDM_SA, MAIRIE...) + PROXIMITÉ
         if (signalement.getLocalisation() != null && categorie.getTypeStructureCible() != null) {
             String typeCible = categorie.getTypeStructureCible().name();
 
@@ -59,10 +76,7 @@ public class SignalementServiceImpl implements SignalementService {
                     .ifPresent(signalement::setStructureAssignee);
         }
 
-        // 5. Enregistrer le signalement (codeTrackingUnique & dateHeureAlerte générés via @PrePersist)
         Signalement signalementEnregistre = signalementRepository.save(signalement);
-
-        // 6. Transformer Entity -> Response DTO
         return responseMapper.toDto(signalementEnregistre);
     }
 
@@ -73,21 +87,17 @@ public class SignalementServiceImpl implements SignalementService {
     @Override
     public SignalementResponseDto modifierSignalement(Long idSignalement, SignalementRequestDto dto) {
 
-        // 1. Rechercher le signalement
         Signalement signalement = signalementRepository.findById(idSignalement)
-                .orElseThrow(() -> new RuntimeException("Signalement introuvable avec l'ID : " + idSignalement));
+                .orElseThrow(() -> new EntityNotFoundException("Signalement introuvable avec l'ID : " + idSignalement));
 
-        // 2. Vérifier l'existence des relations associées
         Citoyen citoyen = citoyenRepository.findById(dto.getCitoyenId())
-                .orElseThrow(() -> new RuntimeException("Citoyen introuvable avec l'ID : " + dto.getCitoyenId()));
+                .orElseThrow(() -> new EntityNotFoundException("Citoyen introuvable avec l'ID : " + dto.getCitoyenId()));
 
         Categorie categorie = categorieRepository.findById(dto.getCategorieId())
-                .orElseThrow(() -> new RuntimeException("Catégorie introuvable avec l'ID : " + dto.getCategorieId()));
+                .orElseThrow(() -> new EntityNotFoundException("Catégorie introuvable avec l'ID : " + dto.getCategorieId()));
 
-        // 3. Mettre à jour l'entité via le mapper
         requestMapper.updateEntityFromDto(signalement, dto, citoyen, categorie);
 
-        // 4. Réévaluer automatiquement l'assignation selon le type de la nouvelle catégorie et la position
         if (signalement.getLocalisation() != null && categorie.getTypeStructureCible() != null) {
             String typeCible = categorie.getTypeStructureCible().name();
 
@@ -100,9 +110,7 @@ public class SignalementServiceImpl implements SignalementService {
             signalement.setStructureAssignee(null);
         }
 
-        // 5. Enregistrer les modifications
         Signalement signalementModifie = signalementRepository.save(signalement);
-
         return responseMapper.toDto(signalementModifie);
     }
 
@@ -114,32 +122,81 @@ public class SignalementServiceImpl implements SignalementService {
     public SignalementResponseDto changerStatut(Long idSignalement, EnumStatut nouveauStatut) {
 
         Signalement signalement = signalementRepository.findById(idSignalement)
-                .orElseThrow(() -> new RuntimeException("Signalement introuvable avec l'ID : " + idSignalement));
+                .orElseThrow(() -> new EntityNotFoundException("Signalement introuvable avec l'ID : " + idSignalement));
 
         signalement.setStatut(nouveauStatut);
-
         Signalement signalementModifie = signalementRepository.save(signalement);
 
         return responseMapper.toDto(signalementModifie);
     }
 
     // ==========================================================
-    // ASSIGNER UNE STRUCTURE COMPÉTENTE (REASSIGNATION MANUELLE)
+    // ASSIGNER UNE STRUCTURE COMPÉTENTE
     // ==========================================================
 
     @Override
     public SignalementResponseDto assignerStructure(Long idSignalement, Long idStructure) {
 
         Signalement signalement = signalementRepository.findById(idSignalement)
-                .orElseThrow(() -> new RuntimeException("Signalement introuvable avec l'ID : " + idSignalement));
+                .orElseThrow(() -> new EntityNotFoundException("Signalement introuvable avec l'ID : " + idSignalement));
 
         StructureCompetente structure = structureCompetenteRepository.findById(idStructure)
-                .orElseThrow(() -> new RuntimeException("Structure compétente introuvable avec l'ID : " + idStructure));
+                .orElseThrow(() -> new EntityNotFoundException("Structure compétente introuvable avec l'ID : " + idStructure));
 
         signalement.setStructureAssignee(structure);
-
         Signalement signalementModifie = signalementRepository.save(signalement);
 
+        return responseMapper.toDto(signalementModifie);
+    }
+
+    // ==========================================================
+    // ASSIGNER UN AGENT DE TERRAIN (estResponsable = false)
+    // ==========================================================
+
+    @Override
+    public SignalementResponseDto assignerAgent(Long idSignalement, AssignationSignalementRequestDto dto) {
+
+        Utilisateur utilisateurConnecte = getUtilisateurConnecte();
+
+        // 1. Contrôle du rôle : Seul un ADMIN ou un Agent Responsable (estResponsable = true) peut effectuer l'assignation
+        if (utilisateurConnecte instanceof AgentStructure agentConnecte) {
+            if (!Boolean.TRUE.equals(agentConnecte.getEstResponsable())) {
+                throw new AccessDeniedException("FORBIDDEN : Seul le Responsable de la structure a le droit d'assigner des signalements.");
+            }
+        } else if (utilisateurConnecte.getRole() != EnumRole.ADMIN) {
+            throw new AccessDeniedException("Vous n'avez pas les droits nécessaires pour effectuer une assignation.");
+        }
+
+        // 2. Vérification de l'existence du signalement
+        Signalement signalement = signalementRepository.findById(idSignalement)
+                .orElseThrow(() -> new EntityNotFoundException("Signalement introuvable avec l'ID : " + idSignalement));
+
+        // 3. Le signalement doit impérativement avoir une structure attribuée
+        if (signalement.getStructureAssignee() == null) {
+            throw new IllegalStateException("Le signalement doit être attribué à une structure compétente avant de pouvoir y affecter un agent.");
+        }
+
+        // 4. Vérification de l'existence de l'agent destinataire
+        AgentStructure agentCible = agentStructureRepository.findById(dto.getIdAgent())
+                .orElseThrow(() -> new EntityNotFoundException("Agent terrain introuvable avec l'ID : " + dto.getIdAgent()));
+
+        // 5. Vérification que l'agent cible appartient à la MÊME structure que celle qui traite le signalement
+        if (!agentCible.getStructure().getIdStructure().equals(signalement.getStructureAssignee().getIdStructure())) {
+            throw new IllegalArgumentException("L'agent sélectionné n'appartient pas à la structure responsable de ce signalement.");
+        }
+
+        // 6. Validation métier : On ne peut assigner qu'à un agent de terrain (estResponsable = false)
+        if (Boolean.TRUE.equals(agentCible.getEstResponsable())) {
+            throw new IllegalArgumentException("L'agent cible est déjà un responsable. L'assignation doit cibler un agent de terrain.");
+        }
+
+        // 7. Assignation et bascule automatique de statut en EN_COURS si NOUVEAU
+        signalement.setAgentAssigne(agentCible);
+        if (signalement.getStatut() == EnumStatut.DECLARE) {
+            signalement.setStatut(EnumStatut.EN_COURS);
+        }
+
+        Signalement signalementModifie = signalementRepository.save(signalement);
         return responseMapper.toDto(signalementModifie);
     }
 
@@ -152,7 +209,7 @@ public class SignalementServiceImpl implements SignalementService {
     public SignalementResponseDto obtenirParId(Long idSignalement) {
 
         Signalement signalement = signalementRepository.findById(idSignalement)
-                .orElseThrow(() -> new RuntimeException("Signalement introuvable avec l'ID : " + idSignalement));
+                .orElseThrow(() -> new EntityNotFoundException("Signalement introuvable avec l'ID : " + idSignalement));
 
         return responseMapper.toDto(signalement);
     }
@@ -200,6 +257,20 @@ public class SignalementServiceImpl implements SignalementService {
     }
 
     // ==========================================================
+    // OBTENIR LES SIGNALEMENTS D'UN AGENT TERRAIN
+    // ==========================================================
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<SignalementResponseDto> obtenirParAgentAssigne(Long idAgent) {
+
+        return signalementRepository.findByAgentAssigne_IdUtilisateur(idAgent)
+                .stream()
+                .map(responseMapper::toDto)
+                .toList();
+    }
+
+    // ==========================================================
     // OBTENIR LES SIGNALEMENTS PAR STATUT
     // ==========================================================
 
@@ -221,7 +292,7 @@ public class SignalementServiceImpl implements SignalementService {
     public void supprimerSignalement(Long idSignalement) {
 
         if (!signalementRepository.existsById(idSignalement)) {
-            throw new RuntimeException("Signalement introuvable avec l'ID : " + idSignalement);
+            throw new EntityNotFoundException("Signalement introuvable avec l'ID : " + idSignalement);
         }
 
         signalementRepository.deleteById(idSignalement);
