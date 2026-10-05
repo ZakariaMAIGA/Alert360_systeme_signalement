@@ -16,11 +16,11 @@ public class GlobalExceptionHandle {
 
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<APIResponse<Object>> handleNotFound(EntityNotFoundException erreur) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(new APIResponse<>(
                                 false,
                                 erreur.getMessage(),
-                                "null"
+                                null
                         )
                 );
     }
@@ -31,7 +31,7 @@ public class GlobalExceptionHandle {
                 .body(new APIResponse<>(
                                 false,
                                 erreur.getMessage(),
-                                "null"
+                                null
                         )
                 );
     }
