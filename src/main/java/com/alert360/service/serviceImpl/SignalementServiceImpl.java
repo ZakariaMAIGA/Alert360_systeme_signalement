@@ -60,12 +60,16 @@ public class SignalementServiceImpl implements SignalementService {
 
     @Override
     public SignalementResponseDto creerSignalement(SignalementRequestDto dto) {
+        Utilisateur utilisateurConnecte = getUtilisateurConnecte();
+        if (utilisateurConnecte.getRole() != EnumRole.ADMIN && !utilisateurConnecte.getIdUtilisateur().equals(dto.getCitoyenId())) {
+            throw new AccessDeniedException("Vous ne pouvez pas crÃ©er un signalement pour un autre citoyen.");
+        }
 
         Citoyen citoyen = citoyenRepository.findById(dto.getCitoyenId())
                 .orElseThrow(() -> new EntityNotFoundException("Citoyen introuvable avec l'ID : " + dto.getCitoyenId()));
 
         Categorie categorie = categorieRepository.findById(dto.getCategorieId())
-                .orElseThrow(() -> new EntityNotFoundException("Catégorie introuvable avec l'ID : " + dto.getCategorieId()));
+                .orElseThrow(() -> new EntityNotFoundException("CatÃ©gorie introuvable avec l'ID : " + dto.getCategorieId()));
 
         Signalement signalement = requestMapper.toEntity(dto, citoyen, categorie);
 
@@ -90,11 +94,16 @@ public class SignalementServiceImpl implements SignalementService {
         Signalement signalement = signalementRepository.findById(idSignalement)
                 .orElseThrow(() -> new EntityNotFoundException("Signalement introuvable avec l'ID : " + idSignalement));
 
+        Utilisateur utilisateurConnecte = getUtilisateurConnecte();
+        if (utilisateurConnecte.getRole() != EnumRole.ADMIN && !signalement.getCitoyen().getIdUtilisateur().equals(utilisateurConnecte.getIdUtilisateur())) {
+            throw new AccessDeniedException("Vous n'Ãªtes pas l'auteur de ce signalement.");
+        }
+
         Citoyen citoyen = citoyenRepository.findById(dto.getCitoyenId())
                 .orElseThrow(() -> new EntityNotFoundException("Citoyen introuvable avec l'ID : " + dto.getCitoyenId()));
 
         Categorie categorie = categorieRepository.findById(dto.getCategorieId())
-                .orElseThrow(() -> new EntityNotFoundException("Catégorie introuvable avec l'ID : " + dto.getCategorieId()));
+                .orElseThrow(() -> new EntityNotFoundException("CatÃ©gorie introuvable avec l'ID : " + dto.getCategorieId()));
 
         requestMapper.updateEntityFromDto(signalement, dto, citoyen, categorie);
 
