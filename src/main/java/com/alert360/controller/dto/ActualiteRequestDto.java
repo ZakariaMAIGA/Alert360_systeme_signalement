@@ -17,7 +17,4 @@ public class ActualiteRequestDto {
 
     @NotNull(message = "Le caractère urgent est obligatoire")
     private Boolean estUrgent;
-
-    @NotNull(message = "L'auteur est obligatoire")
-    private Long auteurId;
 }

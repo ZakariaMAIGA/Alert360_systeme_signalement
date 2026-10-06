@@ -116,7 +116,8 @@ public class ContenuEducatifServiceImpl implements ContenuEducatifService {
     @Transactional(readOnly = true)
     public List<ContenuEducatifResponseDto> obtenirTousLesContenus() {
 
-        return contenuEducatifRepository.findAll()
+        return contenuEducatifRepository
+                .findAllByOrderByDatePublicationDesc()
                 .stream()
                 .map(contenuEducatifResponseMapper::toDto)
                 .toList();

@@ -47,6 +47,20 @@ public class ActualiteController {
     }
 
     // =========================
+// OBTENIR UNE ACTUALITE PAR ID
+// =========================
+    @GetMapping("/{idActualite}")
+    public ResponseEntity<ActualiteResponseDto> obtenirActualiteParId(
+            @PathVariable Long idActualite
+    ) {
+
+        ActualiteResponseDto actualite =
+                actualiteService.obtenirActualiteParId(idActualite);
+
+        return ResponseEntity.ok(actualite);
+    }
+
+    // =========================
     // MODIFIER UNE ACTUALITE
     // =========================
     @PutMapping("/{idActualite}")
