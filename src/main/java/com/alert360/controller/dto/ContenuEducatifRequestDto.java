@@ -20,7 +20,4 @@ public class ContenuEducatifRequestDto {
 
     @NotBlank(message = "L'URL du média est obligatoire")
     private String mediaUrl;
-
-    @NotNull(message = "L'auteur est obligatoire")
-    private Long auteurId;
 }

@@ -62,6 +62,18 @@ public class ActualiteServiceImpl implements ActualiteService {
         return actualiteResponseMapper.toDto(actualiteEnregistree);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public ActualiteResponseDto obtenirActualiteParId(Long idActualite) {
+
+        Actualite actualite = actualiteRepository.findById(idActualite)
+                .orElseThrow(() -> new RuntimeException(
+                        "Actualité introuvable avec l'id : " + idActualite
+                ));
+
+        return actualiteResponseMapper.toDto(actualite);
+    }
+
     // ==========================================
     // MODIFIER UNE ACTUALITE
     // ==========================================

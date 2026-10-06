@@ -17,6 +17,8 @@ public class StructureCompetenteRequestDto {
     @NotNull(message = "Le type de structure est obligatoire")
     private EnumTypeStructure typeStructure;
 
+
+
     // Représentation textuelle WKT du polygone PostGIS (ex: "POLYGON((longitude latitude, ...))")
     @NotBlank(message = "La zone de couverture GPS (format WKT) est obligatoire")
     private String zoneCouvertureGPS;

@@ -13,5 +13,7 @@ public interface ActualiteService {
 
     List<ActualiteResponseDto> obtenirToutesLesActualites();
 
+    ActualiteResponseDto obtenirActualiteParId(Long idActualite);
+
     void supprimerActualite(Long idActualite);
 }
