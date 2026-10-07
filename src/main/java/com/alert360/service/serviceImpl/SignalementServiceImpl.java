@@ -272,6 +272,17 @@ public class SignalementServiceImpl implements SignalementService {
     @Override
     @Transactional(readOnly = true)
     public List<SignalementResponseDto> obtenirParAgentAssigne(Long idAgent) {
+        Utilisateur utilisateurConnecte = getUtilisateurConnecte();
+        AgentStructure agent = agentStructureRepository.findById(idAgent)
+                .orElseThrow(() -> new EntityNotFoundException("Agent de structure introuvable avec l'ID : " + idAgent));
+
+        if (utilisateurConnecte instanceof AgentStructure agentConnecte) {
+            if (!agentConnecte.getStructure().getIdStructure().equals(agent.getStructure().getIdStructure())) {
+                throw new AccessDeniedException("FORBIDDEN : Vous ne pouvez consulter que les signalements des agents de votre structure.");
+            }
+        } else if (utilisateurConnecte.getRole() != EnumRole.ADMIN) {
+            throw new AccessDeniedException("Vous n'avez pas les droits nécessaires pour consulter les signalements de cet agent.");
+        }
 
         return signalementRepository.findByAgentAssigne_IdUtilisateur(idAgent)
                 .stream()

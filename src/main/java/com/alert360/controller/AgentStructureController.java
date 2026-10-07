@@ -3,6 +3,7 @@ package com.alert360.controller;
 
 import com.alert360.controller.dto.AgentStructureRequestDto;
 import com.alert360.controller.dto.AgentStructureResponseDto;
+import com.alert360.controller.dto.AgentStructureUpdateRequestDto;
 import com.alert360.service.serviceInter.AgentStructureService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +31,7 @@ public class AgentStructureController {
     @PutMapping("/{idUtilisateur}")
     public ResponseEntity<AgentStructureResponseDto> modifierAgent(
             @PathVariable Long idUtilisateur,
-            @Valid @RequestBody AgentStructureRequestDto dto) {
+            @Valid @RequestBody AgentStructureUpdateRequestDto dto) {
         AgentStructureResponseDto agentModifie = agentStructureService.modifierAgent(idUtilisateur, dto);
         return ResponseEntity.ok(agentModifie);
     }
