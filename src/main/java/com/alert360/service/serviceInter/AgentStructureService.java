@@ -2,6 +2,7 @@ package com.alert360.service.serviceInter;
 
 import com.alert360.controller.dto.AgentStructureRequestDto;
 import com.alert360.controller.dto.AgentStructureResponseDto;
+import com.alert360.controller.dto.AgentStructureUpdateRequestDto;
 
 import java.util.List;
 
@@ -15,7 +16,7 @@ public interface AgentStructureService {
     /**
      * Modifie les informations d'un agent existant
      */
-    AgentStructureResponseDto modifierAgent(Long idUtilisateur, AgentStructureRequestDto dto);
+    AgentStructureResponseDto modifierAgent(Long idUtilisateur, AgentStructureUpdateRequestDto dto);
 
     /**
      * Récupère un agent par son identifiant unique

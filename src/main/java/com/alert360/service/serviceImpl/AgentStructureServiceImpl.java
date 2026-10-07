@@ -2,6 +2,7 @@ package com.alert360.service.serviceImpl;
 
 import com.alert360.controller.dto.AgentStructureRequestDto;
 import com.alert360.controller.dto.AgentStructureResponseDto;
+import com.alert360.controller.dto.AgentStructureUpdateRequestDto;
 import com.alert360.entity.AgentStructure;
 import com.alert360.entity.StructureCompetente;
 import com.alert360.entity.Utilisateur;
@@ -107,7 +108,7 @@ public class AgentStructureServiceImpl implements AgentStructureService {
     }
 
     @Override
-    public AgentStructureResponseDto modifierAgent(Long idUtilisateur, AgentStructureRequestDto dto) {
+    public AgentStructureResponseDto modifierAgent(Long idUtilisateur, AgentStructureUpdateRequestDto dto) {
 
         Utilisateur utilisateurConnecte = getUtilisateurConnecte();
 
@@ -122,6 +123,8 @@ public class AgentStructureServiceImpl implements AgentStructureService {
                 throw new AccessDeniedException("FORBIDDEN : Vous ne pouvez modifier que les agents appartenant à votre structure.");
             }
             dto.setEstResponsable(false);
+        } else if (utilisateurConnecte.getRole() != EnumRole.ADMIN) {
+            throw new AccessDeniedException("Vous n'avez pas les droits nécessaires pour modifier un agent.");
         }
 
         if (!agent.getMatriculeAgent().equals(dto.getMatriculeAgent())
@@ -163,8 +166,18 @@ public class AgentStructureServiceImpl implements AgentStructureService {
     @Override
     @Transactional(readOnly = true)
     public AgentStructureResponseDto obtenirParId(Long idUtilisateur) {
+        Utilisateur utilisateurConnecte = getUtilisateurConnecte();
         AgentStructure agent = agentStructureRepository.findById(idUtilisateur)
                 .orElseThrow(() -> new EntityNotFoundException("Agent de structure introuvable avec l'ID : " + idUtilisateur));
+
+        if (utilisateurConnecte instanceof AgentStructure agentConnecte) {
+            if (!agentConnecte.getStructure().getIdStructure().equals(agent.getStructure().getIdStructure())) {
+                throw new AccessDeniedException("FORBIDDEN : Vous ne pouvez consulter que les agents de votre structure.");
+            }
+        } else if (utilisateurConnecte.getRole() != EnumRole.ADMIN) {
+            throw new AccessDeniedException("Vous n'avez pas les droits nécessaires pour consulter un agent.");
+        }
+
         return responseMapper.toDto(agent);
     }
 
@@ -222,6 +235,8 @@ public class AgentStructureServiceImpl implements AgentStructureService {
             if (!agentConnecte.getStructure().getIdStructure().equals(agentASupprimer.getStructure().getIdStructure())) {
                 throw new AccessDeniedException("FORBIDDEN : Vous ne pouvez supprimer que les agents appartenant à votre structure.");
             }
+        } else if (utilisateurConnecte.getRole() != EnumRole.ADMIN) {
+            throw new AccessDeniedException("Vous n'avez pas les droits nécessaires pour supprimer un agent.");
         }
 
         agentStructureRepository.deleteById(idUtilisateur);
