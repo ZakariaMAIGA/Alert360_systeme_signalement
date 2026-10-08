@@ -47,6 +47,7 @@ public class SignalementResponseMapper {
                 // Structure assignée
                 .structureAssigneeId(signalement.getStructureAssignee() != null ? signalement.getStructureAssignee().getIdStructure() : null)
                 .structureAssigneeNom(signalement.getStructureAssignee() != null ? signalement.getStructureAssignee().getNomStructure() : null)
+                .agentAssigneId(signalement.getAgentAssigne() != null ? signalement.getAgentAssigne().getIdUtilisateur() : null)
                 .build();
     }
 }
