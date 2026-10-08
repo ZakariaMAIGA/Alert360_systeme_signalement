@@ -108,7 +108,15 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/preuves", "/api/preuves/**")
                         .hasAnyAuthority("ADMIN", "ROLE_ADMIN")
 
-                        // 5. ACTIONS CITOYENNES (/api/actions)
+                        // 5. CLASSEMENT DES SIGNALEMENTS ABUSIFS (/api/abus)
+                        .requestMatchers(HttpMethod.GET, "/api/abus", "/api/abus/**")
+                        .hasAnyAuthority("STRUCTURE", "ROLE_STRUCTURE", "ADMIN", "ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/abus", "/api/abus/**")
+                        .hasAnyAuthority("STRUCTURE", "ROLE_STRUCTURE", "ADMIN", "ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/abus", "/api/abus/**")
+                        .hasAnyAuthority("STRUCTURE", "ROLE_STRUCTURE", "ADMIN", "ROLE_ADMIN")
+
+                        // 6. ACTIONS CITOYENNES (/api/actions)
                         .requestMatchers(HttpMethod.GET, "/api/actions", "/api/actions/**")
                         .hasAnyAuthority("CITOYEN", "ROLE_CITOYEN", "STRUCTURE", "ROLE_STRUCTURE", "ADMIN", "ROLE_ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/actions", "/api/actions/**")
@@ -118,7 +126,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/actions", "/api/actions/**")
                         .hasAnyAuthority("ADMIN", "ROLE_ADMIN")
 
-                        // 6. GESTION DES CITOYENS (/api/citoyens)
+                        // 7. GESTION DES CITOYENS (/api/citoyens)
                         .requestMatchers(HttpMethod.POST, "/api/citoyens").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/citoyens", "/api/citoyens/**")
                         .hasAnyAuthority("STRUCTURE", "ROLE_STRUCTURE", "ADMIN", "ROLE_ADMIN")

@@ -1,6 +1,7 @@
 package com.alert360.mapper.Response;
 
 import com.alert360.controller.dto.PreuveResolutionResponseDto;
+import com.alert360.entity.AgentStructure;
 import com.alert360.entity.PreuveResolution;
 import org.springframework.stereotype.Component;
 
@@ -21,6 +22,17 @@ public class PreuveResolutionResponseMapper {
 
         if(preuve.getSignalement() != null){
             dto.setIdSignalement(preuve.getSignalement().getIdSignalement());
+        }
+
+        AgentStructure agent = preuve.getAgentEmetteur();
+        if (agent == null && preuve.getSignalement() != null) {
+            agent = preuve.getSignalement().getAgentAssigne();
+        }
+        if (agent != null) {
+            dto.setNomAgent(agent.getNom());
+            dto.setPrenomAgent(agent.getPrenom());
+            dto.setTelephoneAgent(agent.getTelephone());
+            dto.setMatriculeAgent(agent.getMatriculeAgent());
         }
 
         return  dto;
