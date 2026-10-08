@@ -47,33 +47,36 @@ public class StructureCompetenteServiceImpl implements StructureCompetenteServic
     @Override
     @Transactional
     public StructureCompetenteResponseDto modifierStructure(Long idStructure, StructureCompetenteRequestDto dto) {
-        // 1. Rechercher la structure
-        StructureCompetente structure = structureCompetenteRepository.findById(idStructure)
-                .orElseThrow(() -> new RuntimeException("Structure compétente introuvable avec l'id : " + idStructure));
+        StructureCompetente structure =
+                structureCompetenteRepository.findById(idStructure)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Structure compétente introuvable avec l'id : "
+                                                + idStructure
+                                )
+                        );
 
-        // 2. Modifier les informations de base
         structure.setNomStructure(dto.getNomStructure());
         structure.setQuartier(dto.getQuartier());
         structure.setTypeStructure(dto.getTypeStructure());
         structure.setTelephoneUrgence(dto.getTelephoneUrgence());
 
-        // 3. Conversion sécurisée de la zone WKT (String) vers Geometry PostGIS (SRID 4326)
-        if (dto.getZoneCouvertureGPS() != null && !dto.getZoneCouvertureGPS().isBlank()) {
-            try {
-                WKTReader wktReader = new WKTReader();
-                Geometry geometry = wktReader.read(dto.getZoneCouvertureGPS());
-                geometry.setSRID(4326);
-                structure.setZoneCouvertureGPS(geometry);
-            } catch (ParseException e) {
-                throw new IllegalArgumentException("Format WKT invalide pour la zone de couverture GPS : " + dto.getZoneCouvertureGPS(), e);
-            }
-        }
+        /*
+         * Conversion WKT → Geometry centralisée dans le mapper.
+         */
+        StructureCompetente structureAvecZone =
+                structureCompetenteRequestMapper.toEntity(dto);
 
-        // 4. Enregistrer les modifications
-        StructureCompetente structureModifiee = structureCompetenteRepository.save(structure);
+        structure.setZoneCouvertureGPS(
+                structureAvecZone.getZoneCouvertureGPS()
+        );
 
-        // 5. Transformer Entity -> DTO
-        return structureCompetenteResponseMapper.toDto(structureModifiee);
+        StructureCompetente structureModifiee =
+                structureCompetenteRepository.save(structure);
+
+        return structureCompetenteResponseMapper.toDto(
+                structureModifiee
+        );
     }
 
     // ==========================================
