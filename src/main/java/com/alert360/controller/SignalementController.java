@@ -21,9 +21,9 @@ public class SignalementController {
 
     private final SignalementService signalementService;
 
-    // ==========================================================
+
     // CREER UN SIGNALEMENT (Routage automatique PostGIS)
-    // ==========================================================
+
 
     @PostMapping
     public ResponseEntity<SignalementResponseDto> creerSignalement(
