@@ -35,6 +35,10 @@ public class PreuveResolution {
     @OneToOne(mappedBy = "preuveResolution", fetch = FetchType.LAZY)
     private Signalement signalement;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "agent_emetteur_id")
+    private AgentStructure agentEmetteur;
+
     @PrePersist
     protected void onCreate() {
         this.dateResolution = LocalDateTime.now();

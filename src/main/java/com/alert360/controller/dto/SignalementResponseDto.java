@@ -44,4 +44,7 @@ public class SignalementResponseDto {
     // Informations de la structure assignée (peut être null si aucune structure à proximité)
     private Long structureAssigneeId;
     private String structureAssigneeNom;
+
+    // Identifiant de l’agent de terrain auquel le signalement est attribué
+    private Long agentAssigneId;
 }

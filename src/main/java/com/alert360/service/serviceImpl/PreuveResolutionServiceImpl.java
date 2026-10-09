@@ -87,6 +87,9 @@ public class PreuveResolutionServiceImpl implements PreuveResolutionService {
 
         // 3. CREATION ET LIAISON
         PreuveResolution preuve = requestMapper.toEntity(dto, signalement);
+        if (utilisateurConnecte instanceof AgentStructure agentEmetteur) {
+            preuve.setAgentEmetteur(agentEmetteur);
+        }
         PreuveResolution savedPreuve = preuveResolutionRepository.save(preuve);
 
         signalement.setPreuveResolution(savedPreuve);

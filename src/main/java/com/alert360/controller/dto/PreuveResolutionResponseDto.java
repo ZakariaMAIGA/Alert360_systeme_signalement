@@ -13,4 +13,8 @@ public class PreuveResolutionResponseDto {
     private String rapportTexte;
     private LocalDateTime dateResolution;
     private Long idSignalement;
+    private String nomAgent;
+    private String prenomAgent;
+    private String telephoneAgent;
+    private String matriculeAgent;
 }

@@ -13,6 +13,7 @@ import com.alert360.entity.enums.EnumRole;
 import com.alert360.entity.enums.EnumStatut;
 import com.alert360.mapper.Request.SignalementRequestMapper;
 import com.alert360.mapper.Response.SignalementResponseMapper;
+import com.alert360.repository.AbusRepository;
 import com.alert360.repository.AgentStructureRepository;
 import com.alert360.repository.CategorieRepository;
 import com.alert360.repository.CitoyenRepository;
@@ -22,12 +23,15 @@ import com.alert360.repository.UtilisateurRepository;
 import com.alert360.service.serviceInter.SignalementService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -35,6 +39,7 @@ import java.util.List;
 public class SignalementServiceImpl implements SignalementService {
 
     private final SignalementRepository signalementRepository;
+    private final AbusRepository abusRepository;
     private final CitoyenRepository citoyenRepository;
     private final CategorieRepository categorieRepository;
     private final StructureCompetenteRepository structureCompetenteRepository;
@@ -133,6 +138,22 @@ public class SignalementServiceImpl implements SignalementService {
         Signalement signalement = signalementRepository.findById(idSignalement)
                 .orElseThrow(() -> new EntityNotFoundException("Signalement introuvable avec l'ID : " + idSignalement));
 
+        Utilisateur utilisateurConnecte = getUtilisateurConnecte();
+        if (utilisateurConnecte instanceof AgentStructure agentConnecte) {
+            if (!Boolean.TRUE.equals(agentConnecte.getEstResponsable())) {
+                throw new AccessDeniedException("Seul le responsable de structure peut confirmer le traitement d'un signalement.");
+            }
+
+            StructureCompetente structureAssignee = signalement.getStructureAssignee();
+            StructureCompetente structureResponsable = agentConnecte.getStructure();
+            if (structureAssignee == null || structureResponsable == null ||
+                    !Objects.equals(structureAssignee.getIdStructure(), structureResponsable.getIdStructure())) {
+                throw new AccessDeniedException("Ce signalement ne relève pas de votre structure.");
+            }
+        } else if (utilisateurConnecte.getRole() != EnumRole.ADMIN) {
+            throw new AccessDeniedException("Vous n'avez pas les droits nécessaires pour modifier le statut.");
+        }
+
         signalement.setStatut(nouveauStatut);
         Signalement signalementModifie = signalementRepository.save(signalement);
 
@@ -185,6 +206,10 @@ public class SignalementServiceImpl implements SignalementService {
             throw new IllegalStateException("Le signalement doit être attribué à une structure compétente avant de pouvoir y affecter un agent.");
         }
 
+        if (abusRepository.existsBySignalement_IdSignalement(idSignalement)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Un signalement classé comme abus ne peut pas être attribué à un agent.");
+        }
+
         // 4. Vérification de l'existence de l'agent destinataire
         AgentStructure agentCible = agentStructureRepository.findById(dto.getIdAgent())
                 .orElseThrow(() -> new EntityNotFoundException("Agent terrain introuvable avec l'ID : " + dto.getIdAgent()));
@@ -192,6 +217,10 @@ public class SignalementServiceImpl implements SignalementService {
         // 5. Vérification que l'agent cible appartient à la MÊME structure que celle qui traite le signalement
         if (!agentCible.getStructure().getIdStructure().equals(signalement.getStructureAssignee().getIdStructure())) {
             throw new IllegalArgumentException("L'agent sélectionné n'appartient pas à la structure responsable de ce signalement.");
+        }
+
+        if (signalement.getAgentAssigne() != null) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Ce signalement est déjà attribué à un agent.");
         }
 
         // 6. Validation métier : On ne peut assigner qu'à un agent de terrain (estResponsable = false)
@@ -272,6 +301,17 @@ public class SignalementServiceImpl implements SignalementService {
     @Override
     @Transactional(readOnly = true)
     public List<SignalementResponseDto> obtenirParAgentAssigne(Long idAgent) {
+        Utilisateur utilisateurConnecte = getUtilisateurConnecte();
+        AgentStructure agent = agentStructureRepository.findById(idAgent)
+                .orElseThrow(() -> new EntityNotFoundException("Agent de structure introuvable avec l'ID : " + idAgent));
+
+        if (utilisateurConnecte instanceof AgentStructure agentConnecte) {
+            if (!agentConnecte.getStructure().getIdStructure().equals(agent.getStructure().getIdStructure())) {
+                throw new AccessDeniedException("FORBIDDEN : Vous ne pouvez consulter que les signalements des agents de votre structure.");
+            }
+        } else if (utilisateurConnecte.getRole() != EnumRole.ADMIN) {
+            throw new AccessDeniedException("Vous n'avez pas les droits nécessaires pour consulter les signalements de cet agent.");
+        }
 
         return signalementRepository.findByAgentAssigne_IdUtilisateur(idAgent)
                 .stream()

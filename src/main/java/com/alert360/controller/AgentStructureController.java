@@ -2,6 +2,7 @@ package com.alert360.controller;
 
 import com.alert360.controller.dto.AgentStructureRequestDto;
 import com.alert360.controller.dto.AgentStructureResponseDto;
+import com.alert360.controller.dto.AgentStructureUpdateRequestDto;
 import com.alert360.service.serviceInter.AgentStructureService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -130,16 +131,8 @@ public class AgentStructureController {
                     example = "5"
             )
             @PathVariable Long idUtilisateur,
-
-            @Valid @RequestBody AgentStructureRequestDto dto
-    ) {
-
-        AgentStructureResponseDto agentModifie =
-                agentStructureService.modifierAgent(
-                        idUtilisateur,
-                        dto
-                );
-
+            @Valid @RequestBody AgentStructureRequestDto dto) {
+        AgentStructureResponseDto agentModifie = agentStructureService.modifierAgent(idUtilisateur, dto);
         return ResponseEntity.ok(agentModifie);
     }
 
