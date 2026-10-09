@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Data
-public class AgentStructureUpdateDto {
+public class  AgentStructureUpdateDto {
 
     @NotBlank(message = "Le nom ne peut pas être vide")
     private String nom;

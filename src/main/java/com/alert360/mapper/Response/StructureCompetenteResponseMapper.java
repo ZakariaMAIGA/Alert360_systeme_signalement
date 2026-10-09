@@ -10,12 +10,16 @@ public class StructureCompetenteResponseMapper {
 
     private final WKTWriter wktWriter = new WKTWriter();
 
-    public StructureCompetenteResponseDto toDto(StructureCompetente structure) {
+    public StructureCompetenteResponseDto toDto(
+            StructureCompetente structure
+    ) {
+
         if (structure == null) {
             return null;
         }
 
-        StructureCompetenteResponseDto dto = new StructureCompetenteResponseDto();
+        StructureCompetenteResponseDto dto =
+                new StructureCompetenteResponseDto();
 
         dto.setIdStructure(structure.getIdStructure());
         dto.setNomStructure(structure.getNomStructure());
@@ -23,15 +27,25 @@ public class StructureCompetenteResponseMapper {
         dto.setTypeStructure(structure.getTypeStructure());
         dto.setTelephoneUrgence(structure.getTelephoneUrgence());
 
-        // Conversion de l'objet Geometry PostGIS en chaîne de caractères WKT
+        // Geometry PostGIS → WKT
         if (structure.getZoneCouvertureGPS() != null) {
-            dto.setZoneCouvertureGPS(wktWriter.write(structure.getZoneCouvertureGPS()));
+            dto.setZoneCouvertureGPS(
+                    wktWriter.write(structure.getZoneCouvertureGPS())
+            );
         }
 
-        // Calcul des métriques associées
-        dto.setNombreAgents(structure.getAgents() != null ? structure.getAgents().size() : 0);
+        // Nombre d'agents
+        dto.setNombreAgents(
+                structure.getAgents() != null
+                        ? structure.getAgents().size()
+                        : 0
+        );
+
+        // Nombre de signalements assignés
         dto.setNombreSignalementsAssignes(
-                structure.getSignalementsAssignes() != null ? structure.getSignalementsAssignes().size() : 0
+                structure.getSignalementsAssignes() != null
+                        ? structure.getSignalementsAssignes().size()
+                        : 0
         );
 
         return dto;

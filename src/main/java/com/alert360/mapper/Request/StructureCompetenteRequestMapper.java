@@ -13,6 +13,7 @@ public class StructureCompetenteRequestMapper {
     private final WKTReader wktReader = new WKTReader();
 
     public StructureCompetente toEntity(StructureCompetenteRequestDto dto) {
+
         if (dto == null) {
             return null;
         }
@@ -24,17 +25,36 @@ public class StructureCompetenteRequestMapper {
         structure.setTypeStructure(dto.getTypeStructure());
         structure.setTelephoneUrgence(dto.getTelephoneUrgence());
 
-        // Conversion de la chaîne WKT (String) vers l'objet Geometry PostGIS (SRID 4326)
-        if (dto.getZoneCouvertureGPS() != null && !dto.getZoneCouvertureGPS().isBlank()) {
-            try {
-                Geometry geometry = wktReader.read(dto.getZoneCouvertureGPS());
-                geometry.setSRID(4326); // Important pour la géolocalisation PostGIS
-                structure.setZoneCouvertureGPS(geometry);
-            } catch (ParseException e) {
-                throw new IllegalArgumentException("Le format WKT de la zone de couverture GPS est invalide : " + dto.getZoneCouvertureGPS(), e);
-            }
-        }
+        structure.setZoneCouvertureGPS(
+                convertirWktEnGeometry(dto.getZoneCouvertureGPS())
+        );
 
         return structure;
+    }
+
+    /**
+     * Convertit une chaîne WKT en Geometry JTS avec SRID 4326.
+     */
+    private Geometry convertirWktEnGeometry(String wkt) {
+
+        if (wkt == null || wkt.isBlank()) {
+            return null;
+        }
+
+        try {
+            Geometry geometry = wktReader.read(wkt);
+
+            // SRID utilisé pour les coordonnées GPS
+            geometry.setSRID(4326);
+
+            return geometry;
+
+        } catch (ParseException e) {
+
+            throw new IllegalArgumentException(
+                    "Le format WKT de la zone de couverture GPS est invalide : " + wkt,
+                    e
+            );
+        }
     }
 }
