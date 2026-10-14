@@ -29,37 +29,80 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtils jwtUtils;
 
-    public AuthResponseDto seConnecter(LoginRequestDto loginRequest) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        loginRequest.getTelephone(),
-                        loginRequest.getMotDePasse()
-                )
-        );
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+    public AuthResponseDto seConnecter(LoginRequestDto loginRequest) {
+
+        // 1. Vérifier les identifiants
+        Authentication authentication =
+                authenticationManager.authenticate(
+                        new UsernamePasswordAuthenticationToken(
+                                loginRequest.getTelephone(),
+                                loginRequest.getMotDePasse()
+                        )
+                );
+
+        // 2. Récupérer l'utilisateur authentifié
+        Utilisateur user = utilisateurRepository
+                .findByTelephone(loginRequest.getTelephone())
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "Utilisateur introuvable avec le numéro : "
+                                        + loginRequest.getTelephone()
+                        )
+                );
+
+        // 3. Vérifier que le compte est actif
+        if (!Boolean.TRUE.equals(user.getEstActif())) {
+            throw new org.springframework.security.authentication
+                    .DisabledException(
+                    "Votre compte est désactivé."
+            );
+        }
+
+        // 4. Autoriser uniquement les citoyens et les agents de terrain
+        boolean estCitoyen = user instanceof Citoyen;
+
+        boolean estAgentDeTerrain =
+                user instanceof AgentStructure agent
+                        && !Boolean.TRUE.equals(agent.getEstResponsable());
+
+        if (!estCitoyen && !estAgentDeTerrain) {
+            throw new org.springframework.security.authentication
+                    .BadCredentialsException(
+                    "Ce profil n'est pas autorisé à accéder "
+                            + "à l'application mobile Alert'360."
+            );
+        }
+
+        // 5. Enregistrer l'authentification après vérification
+        SecurityContextHolder.getContext()
+                .setAuthentication(authentication);
+
+        // 6. Générer le JWT uniquement pour les profils autorisés
         String jwt = jwtUtils.generateJwtToken(authentication);
 
-        Utilisateur user = utilisateurRepository.findByTelephone(loginRequest.getTelephone())
-                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable avec le numéro : " + loginRequest.getTelephone()));
-
-        AuthResponseDto.AuthResponseDtoBuilder builder = AuthResponseDto.builder()
-                .token(jwt)
-                .type("Bearer")
-                .idUtilisateur(user.getIdUtilisateur())
-                .nom(user.getNom())
-                .prenom(user.getPrenom())
-                .telephone(user.getTelephone())
-                .email(user.getEmail())
-                .role(user.getRole())
-                .estActif(user.getEstActif());
+        // 7. Construire la réponse
+        AuthResponseDto.AuthResponseDtoBuilder builder =
+                AuthResponseDto.builder()
+                        .token(jwt)
+                        .type("Bearer")
+                        .idUtilisateur(user.getIdUtilisateur())
+                        .nom(user.getNom())
+                        .prenom(user.getPrenom())
+                        .telephone(user.getTelephone())
+                        .email(user.getEmail())
+                        .role(user.getRole())
+                        .estActif(user.getEstActif());
 
         if (user instanceof Citoyen citoyen) {
             builder.quartier(citoyen.getQuartier());
         } else if (user instanceof AgentStructure agent) {
             builder.estResponsable(agent.getEstResponsable());
+
             if (agent.getStructure() != null) {
-                builder.idStructure(agent.getStructure().getIdStructure());
+                builder.idStructure(
+                        agent.getStructure().getIdStructure()
+                );
             }
         }
 
