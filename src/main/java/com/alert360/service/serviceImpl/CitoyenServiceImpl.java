@@ -2,6 +2,7 @@ package com.alert360.service.serviceImpl;
 
 import com.alert360.controller.dto.CitoyenRequestDto;
 import com.alert360.controller.dto.CitoyenResponseDto;
+import com.alert360.controller.dto.CitoyenUpdateRequestDto;
 import com.alert360.entity.Citoyen;
 import com.alert360.mapper.Request.CitoyenRequestMapper;
 import com.alert360.mapper.Response.CitoyenResponseMapper;
@@ -30,22 +31,33 @@ public class CitoyenServiceImpl implements CitoyenService {
         return responseMapper.toDto(savedCitoyen);
     }
 
+
     @Override
-    public CitoyenResponseDto modifierCitoyen(Long idUtilisateur, CitoyenRequestDto dto) {
+    public CitoyenResponseDto modifierProfilCitoyen(
+            Long idUtilisateur,
+            CitoyenUpdateRequestDto dto) {
 
         Citoyen citoyen = citoyenRepository.findById(idUtilisateur)
-                .orElseThrow(() -> new EntityNotFoundException("Citoyen introuvable avec l'ID : " +idUtilisateur));
-        citoyen.setNom(dto.getNom());
-        citoyen.setPrenom(dto.getPrenom());
-        citoyen.setTelephone(dto.getTelephone());
-        citoyen.setEmail(dto.getEmail());
-        citoyen.setMotDePasse(dto.getMotDePasse());
-        citoyen.setQuartier(dto.getQuartier());
+                .orElseThrow(() ->
+                        new EntityNotFoundException(
+                                "Citoyen introuvable avec l'ID : " + idUtilisateur
+                        )
+                );
 
-        Citoyen updateCitoyen = citoyenRepository.save(citoyen);
-        return responseMapper.toDto(updateCitoyen);
+        citoyen.setNom(dto.getNom().trim());
+        citoyen.setPrenom(dto.getPrenom().trim());
+        citoyen.setTelephone(dto.getTelephone().trim());
+        citoyen.setEmail(
+                dto.getEmail() == null || dto.getEmail().isBlank()
+                        ? null
+                        : dto.getEmail().trim()
+        );
+        citoyen.setQuartier(dto.getQuartier().trim());
 
+        // Le mot de passe n'est volontairement pas modifié ici.
+        Citoyen citoyenMisAJour = citoyenRepository.save(citoyen);
 
+        return responseMapper.toDto(citoyenMisAJour);
     }
 
     @Override

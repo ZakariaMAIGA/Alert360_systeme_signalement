@@ -54,17 +54,25 @@ public interface StructureCompetenteRepository extends JpaRepository<StructureCo
      * Retourne sous forme d'interface de projection pour récupérer la distance calculée par PostGIS.
      */
     @Query(value = """
-        SELECT 
-            s.id_structure AS idStructure,
-            s.nom_structure AS nomStructure,
-            s.quartier AS quartier,
-            s.type_structure AS typeStructure,
-            s.telephone_urgence AS telephoneUrgence,
-            ST_Distance(CAST(s.zone_couverturegps AS geography), CAST(:point AS geography)) AS distanceEnMetres
-        FROM structures_competentes s
-        WHERE s.zone_couverturegps IS NOT NULL
-          AND ST_DWithin(CAST(s.zone_couverturegps AS geography), CAST(:point AS geography), :rayonMetres)
-        ORDER BY distanceEnMetres ASC
+    SELECT
+        s.id_structure AS idStructure,
+        s.nom_structure AS nomStructure,
+        s.quartier AS quartier,
+        s.type_structure AS typeStructure,
+        s.telephone_urgence AS telephoneUrgence,
+        ST_Distance(
+            CAST(s.zone_couverturegps AS geography),
+            CAST(:point AS geography)
+        ) AS distanceEnMetres
+    FROM structures_competentes s
+    WHERE s.zone_couverturegps IS NOT NULL
+      AND s.type_structure IN ('POLICE', 'SAPEURS_POMPIERS')
+      AND ST_DWithin(
+          CAST(s.zone_couverturegps AS geography),
+          CAST(:point AS geography),
+          :rayonMetres
+      )
+    ORDER BY distanceEnMetres ASC
     """, nativeQuery = true)
     List<SosStructureProjection> findNearbyStructuresForSos(
             @Param("point") Point point,
