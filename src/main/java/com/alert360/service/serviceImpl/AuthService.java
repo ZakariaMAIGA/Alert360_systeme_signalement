@@ -8,6 +8,7 @@ import com.alert360.entity.AgentStructure;
 import com.alert360.entity.Citoyen;
 import com.alert360.entity.Utilisateur;
 import com.alert360.entity.enums.EnumRole;
+import com.alert360.exception.ForbiddenException;
 import com.alert360.repository.CitoyenRepository;
 import com.alert360.repository.UtilisateurRepository;
 import com.alert360.security.jwt.JwtUtils;
@@ -84,7 +85,7 @@ public class AuthService {
                 : (estCitoyen || estAgentDeTerrain);
 
         if (!profilAutorise) {
-            throw new BadCredentialsException(
+            throw new ForbiddenException(
                     connexionWeb
                             ? "Ce profil n'est pas autorisé à accéder à l'application web Alert'360."
                             : "Ce profil n'est pas autorisé à accéder à l'application mobile Alert'360."

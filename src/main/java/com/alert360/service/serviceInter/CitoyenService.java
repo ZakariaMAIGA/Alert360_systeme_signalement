@@ -2,6 +2,7 @@ package com.alert360.service.serviceInter;
 
 import com.alert360.controller.dto.CitoyenRequestDto;
 import com.alert360.controller.dto.CitoyenResponseDto;
+import com.alert360.controller.dto.CitoyenUpdateRequestDto;
 
 import java.util.List;
 
@@ -9,7 +10,10 @@ public interface CitoyenService {
 
     CitoyenResponseDto creerCitoyen(CitoyenRequestDto dto);
 
-    CitoyenResponseDto modifierCitoyen(Long idUtilisateur, CitoyenRequestDto dto);
+    CitoyenResponseDto modifierProfilCitoyen(
+            Long idUtilisateur,
+            CitoyenUpdateRequestDto dto
+    );
 
     CitoyenResponseDto obtenirParId(Long idUtilisateur);
     List<CitoyenResponseDto> obtenirParQuartier(String quartier);

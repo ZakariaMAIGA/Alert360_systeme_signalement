@@ -8,6 +8,10 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.core.AuthenticationException;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -86,6 +90,31 @@ public class GlobalExceptionHandle {
                                 errors
                         )
                 );
+    }
+
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<APIResponse<Object>> handleBadCredentials(
+            BadCredentialsException erreur) {
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new APIResponse<>(
+                        false,
+                        "Numéro de téléphone ou mot de passe incorrect.",
+                        null
+                ));
+    }
+
+    @ExceptionHandler(DisabledException.class)
+    public ResponseEntity<APIResponse<Object>> handleDisabled(
+            DisabledException erreur) {
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(new APIResponse<>(
+                        false,
+                        "Votre compte est désactivé. Veuillez contacter l'administration.",
+                        null
+                ));
     }
 
 }

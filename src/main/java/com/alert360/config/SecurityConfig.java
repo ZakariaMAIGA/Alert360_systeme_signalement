@@ -69,6 +69,12 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/swagger-ui.html"
                         ).permitAll()
+
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/medias/photos/**",
+                                "/api/medias/audios/**"
+                        ).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/actualites", "/api/actualites/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/contenus", "/api/contenus/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/categories", "/api/categories/**").permitAll()
@@ -128,8 +134,16 @@ public class SecurityConfig {
 
                         // 7. GESTION DES CITOYENS (/api/citoyens)
                         .requestMatchers(HttpMethod.POST, "/api/citoyens").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/citoyens", "/api/citoyens/**")
-                        .hasAnyAuthority("STRUCTURE", "ROLE_STRUCTURE", "ADMIN", "ROLE_ADMIN")
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/citoyens",
+                                "/api/citoyens/**"
+                        )
+                        .hasAnyAuthority(
+                                "CITOYEN", "ROLE_CITOYEN",
+                                "STRUCTURE", "ROLE_STRUCTURE",
+                                "ADMIN", "ROLE_ADMIN"
+                        )
                         .requestMatchers(HttpMethod.PUT, "/api/citoyens", "/api/citoyens/**")
                         .hasAnyAuthority("CITOYEN", "ROLE_CITOYEN", "ADMIN", "ROLE_ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/api/citoyens/*/badges", "/api/citoyens/badges/**")

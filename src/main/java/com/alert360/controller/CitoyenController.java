@@ -3,6 +3,7 @@ package com.alert360.controller;
 import com.alert360.controller.dto.APIResponse;
 import com.alert360.controller.dto.CitoyenRequestDto;
 import com.alert360.controller.dto.CitoyenResponseDto;
+import com.alert360.controller.dto.CitoyenUpdateRequestDto;
 import com.alert360.service.serviceInter.CitoyenService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -82,39 +83,22 @@ public class CitoyenController {
     // MODIFIER UN CITOYEN
     // ============================================================
 
+
     @PutMapping("/{idUtilisateur}")
     @Operation(
-            summary = "Modifier un citoyen",
-            description = "Permet de modifier les informations d'un citoyen existant."
+            summary = "Modifier le profil d'un citoyen",
+            description = "Modifie le nom, le prénom, le téléphone, "
+                    + "l'adresse email et le quartier sans modifier son mot de passe."
     )
     @ApiResponses({
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Citoyen modifié avec succès"
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "Données invalides"
-            ),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "Authentification requise"
-            ),
-            @ApiResponse(
-                    responseCode = "403",
-                    description = "Accès interdit"
-            ),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "Citoyen introuvable"
-            ),
-            @ApiResponse(
-                    responseCode = "409",
-                    description = "Les informations fournies sont déjà utilisées"
-            )
+            @ApiResponse(responseCode = "200", description = "Profil modifié avec succès"),
+            @ApiResponse(responseCode = "400", description = "Données invalides"),
+            @ApiResponse(responseCode = "401", description = "Authentification requise"),
+            @ApiResponse(responseCode = "403", description = "Accès interdit"),
+            @ApiResponse(responseCode = "404", description = "Citoyen introuvable"),
+            @ApiResponse(responseCode = "409", description = "Téléphone ou email déjà utilisé")
     })
     public ResponseEntity<APIResponse<Object>> modifierCitoyen(
-
             @Parameter(
                     description = "Identifiant unique du citoyen",
                     example = "1",
@@ -122,20 +106,20 @@ public class CitoyenController {
             )
             @PathVariable Long idUtilisateur,
 
-            @Valid @RequestBody CitoyenRequestDto dto
+            @Valid @RequestBody CitoyenUpdateRequestDto dto
     ) {
-
         CitoyenResponseDto citoyenModifie =
-                citoyenService.modifierCitoyen(idUtilisateur, dto);
+                citoyenService.modifierProfilCitoyen(idUtilisateur, dto);
 
         return ResponseEntity.ok(
                 new APIResponse<>(
                         true,
-                        "Citoyen modifié avec succès.",
+                        "Profil modifié avec succès.",
                         citoyenModifie
                 )
         );
     }
+
 
 
     // ============================================================

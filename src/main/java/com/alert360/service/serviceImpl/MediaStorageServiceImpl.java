@@ -1,7 +1,11 @@
-package com.alert360.service.serviceImpl;
+
+        package com.alert360.service.serviceImpl;
 
 import com.alert360.service.serviceInter.MediaStorageService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
@@ -52,12 +56,102 @@ public class MediaStorageServiceImpl implements MediaStorageService {
 
     @Override
     public String stockerPhoto(MultipartFile fichier) {
-        return stocker(fichier, "photos", EXTENSIONS_PHOTO, TAILLE_MAX_PHOTO);
+        return stocker(
+                fichier,
+                "photos",
+                EXTENSIONS_PHOTO,
+                TAILLE_MAX_PHOTO
+        );
     }
 
     @Override
     public String stockerAudio(MultipartFile fichier) {
-        return stocker(fichier, "audios", EXTENSIONS_AUDIO, TAILLE_MAX_AUDIO);
+        return stocker(
+                fichier,
+                "audios",
+                EXTENSIONS_AUDIO,
+                TAILLE_MAX_AUDIO
+        );
+    }
+
+    @Override
+    public Resource chargerPhoto(String nomFichier) {
+        return chargerMedia(
+                nomFichier,
+                "photos",
+                "[a-fA-F0-9-]+\\.(jpg|jpeg|png|webp)",
+                "Photo introuvable.",
+                "Photo inaccessible.",
+                "Impossible de lire la photo."
+        );
+    }
+
+    @Override
+    public Resource chargerAudio(String nomFichier) {
+        return chargerMedia(
+                nomFichier,
+                "audios",
+                "[a-fA-F0-9-]+\\.(mp3|m4a|aac|wav|ogg|webm|3gp)",
+                "Audio introuvable.",
+                "Audio inaccessible.",
+                "Impossible de lire le fichier audio."
+        );
+    }
+
+    private Resource chargerMedia(
+            String nomFichier,
+            String sousDossier,
+            String motifAutorise,
+            String messageIntrouvable,
+            String messageInaccessible,
+            String messageErreur
+    ) {
+        // Validation du nom de fichier pour empêcher
+        // les tentatives d'accès à d'autres répertoires.
+        if (nomFichier == null
+                || nomFichier.isBlank()
+                || !nomFichier.matches(motifAutorise)) {
+            throw new ResponseStatusException(
+                    BAD_REQUEST,
+                    "Nom de fichier invalide."
+            );
+        }
+
+        Path dossier = dossierRacine
+                .resolve(sousDossier)
+                .normalize();
+
+        Path fichier = dossier
+                .resolve(nomFichier)
+                .normalize();
+
+        if (!fichier.startsWith(dossier)
+                || !Files.isRegularFile(fichier)) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    messageIntrouvable
+            );
+        }
+
+        try {
+            Resource resource = new UrlResource(fichier.toUri());
+
+            if (!resource.exists() || !resource.isReadable()) {
+                throw new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        messageInaccessible
+                );
+            }
+
+            return resource;
+
+        } catch (IOException e) {
+            throw new ResponseStatusException(
+                    INTERNAL_SERVER_ERROR,
+                    messageErreur,
+                    e
+            );
+        }
     }
 
     private String stocker(
@@ -68,43 +162,57 @@ public class MediaStorageServiceImpl implements MediaStorageService {
     ) {
         if (fichier == null || fichier.isEmpty()) {
             throw new ResponseStatusException(
-                    BAD_REQUEST, "Le fichier envoyé est vide."
+                    BAD_REQUEST,
+                    "Le fichier envoyé est vide."
             );
         }
 
         if (fichier.getSize() > tailleMax) {
             throw new ResponseStatusException(
-                    BAD_REQUEST, "Le fichier dépasse la taille maximale autorisée."
+                    BAD_REQUEST,
+                    "Le fichier dépasse la taille maximale autorisée."
             );
         }
 
         String typeMime = fichier.getContentType();
 
-        if (typeMime == null || !typesAutorises.containsKey(typeMime.toLowerCase())) {
+        if (typeMime == null
+                || !typesAutorises.containsKey(typeMime.toLowerCase())) {
             throw new ResponseStatusException(
-                    BAD_REQUEST, "Le format du fichier n'est pas autorisé."
+                    BAD_REQUEST,
+                    "Le format du fichier n'est pas autorisé."
             );
         }
 
         String extension = typesAutorises.get(typeMime.toLowerCase());
         String nomFichier = UUID.randomUUID() + extension;
-        Path dossier = dossierRacine.resolve(sousDossier).normalize();
-        Path destination = dossier.resolve(nomFichier).normalize();
+
+        Path dossier = dossierRacine
+                .resolve(sousDossier)
+                .normalize();
+
+        Path destination = dossier
+                .resolve(nomFichier)
+                .normalize();
 
         if (!destination.startsWith(dossierRacine)) {
             throw new ResponseStatusException(
-                    BAD_REQUEST, "Chemin de fichier invalide."
+                    BAD_REQUEST,
+                    "Chemin de fichier invalide."
             );
         }
 
         try {
             Files.createDirectories(dossier);
             fichier.transferTo(destination);
+
             return sousDossier + "/" + nomFichier;
+
         } catch (IOException e) {
             throw new ResponseStatusException(
                     INTERNAL_SERVER_ERROR,
-                    "Impossible d'enregistrer le fichier sur le serveur."
+                    "Impossible d'enregistrer le fichier sur le serveur.",
+                    e
             );
         }
     }
