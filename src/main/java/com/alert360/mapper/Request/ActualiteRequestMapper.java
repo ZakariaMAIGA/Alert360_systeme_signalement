@@ -18,6 +18,8 @@ public class ActualiteRequestMapper {
         actualite.setTitre(dto.getTitre());
         actualite.setCorpsTexte(dto.getCorpsTexte());
         actualite.setCommuneCible(dto.getCommuneCible());
+
+        actualite.setImageUrl(dto.getImageUrl());
         actualite.setEstUrgent(dto.getEstUrgent());
 
         actualite.setAuteur(auteur);

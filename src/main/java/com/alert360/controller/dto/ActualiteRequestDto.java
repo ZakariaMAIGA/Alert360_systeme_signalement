@@ -15,6 +15,8 @@ public class ActualiteRequestDto {
 
     private String communeCible;
 
+    private String imageUrl;
+
     @NotNull(message = "Le caractère urgent est obligatoire")
     private Boolean estUrgent;
 }

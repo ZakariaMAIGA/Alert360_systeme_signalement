@@ -69,7 +69,11 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/swagger-ui.html"
                         ).permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/utilisateurs/me")
+                        .authenticated()
 
+                        .requestMatchers("/api/admin/**", "/api/utilisateurs/**")
+                        .hasAnyAuthority("ADMIN", "ROLE_ADMIN")
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/medias/photos/**",
