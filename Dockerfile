@@ -7,6 +7,9 @@ COPY pom.xml .
 COPY .mvn ./.mvn
 COPY mvnw .
 
+# Donner les droits d'exécution au script Maven Wrapper
+RUN chmod +x mvnw
+
 # Télécharger les dépendances pour les mettre en cache Docker
 RUN ./mvnw dependency:go-offline
 
