@@ -26,7 +26,8 @@ COPY --from=build /alert360/target/*.jar alert360.jar
 
 # Configuration du port (5151 par défaut, ou celui imposé dynamiquement par Render)
 
-EXPOSE 5151
+ENV PORT=5151
+EXPOSE ${PORT}
 
 # Lancer l'application avec la syntaxe JSON correcte (avec guillemets)
-ENTRYPOINT ["sh", "-c", "java -jar alert360.jar"]
+ENTRYPOINT ["sh", "-c", "java -jar alert360.jar --server.port=${PORT}"]
