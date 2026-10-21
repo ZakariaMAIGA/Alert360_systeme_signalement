@@ -8,7 +8,7 @@ COPY .mvn ./.mvn
 COPY mvnw .
 
 # Télécharger les dépendances pour les mettre en cache Docker
-RUN ./mvnw dependency:go-offline -B
+RUN ./mvnw dependency:go-offline
 
 # Copier le code source et compiler le fichier JAR final
 COPY src ./src
