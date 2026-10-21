@@ -16,6 +16,7 @@ public class ActualiteResponseMapper {
         dto.setIdActualite(actualite.getIdActualite());
         dto.setTitre(actualite.getTitre());
         dto.setCorpsTexte(actualite.getCorpsTexte());
+        dto.setImageUrl(actualite.getImageUrl());
         dto.setCommuneCible(actualite.getCommuneCible());
         dto.setEstUrgent(actualite.getEstUrgent());
         dto.setDatePublication(actualite.getDatePublication());

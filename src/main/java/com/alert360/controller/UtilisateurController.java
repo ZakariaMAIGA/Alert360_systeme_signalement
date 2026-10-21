@@ -12,6 +12,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.alert360.security.services.UserDetailsCustom;
+import org.springframework.security.core.Authentication;
+
 import java.util.List;
 
 @RestController
@@ -63,6 +66,31 @@ public class UtilisateurController {
     ) {
         UtilisateurResponseDto utilisateur =
                 utilisateurService.obtenirParId(idUtilisateur);
+
+        return ResponseEntity.ok(utilisateur);
+    }
+
+
+
+
+    @GetMapping("/me")
+    @Operation(
+            summary = "Obtenir mon profil",
+            description = "Retourne le profil de l'utilisateur actuellement authentifié."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Profil récupéré"),
+            @ApiResponse(responseCode = "401", description = "Authentification requise"),
+            @ApiResponse(responseCode = "403", description = "Accès interdit")
+    })
+    public ResponseEntity<UtilisateurResponseDto> obtenirMonProfil(
+            Authentication authentication
+    ) {
+        UserDetailsCustom utilisateurConnecte =
+                (UserDetailsCustom) authentication.getPrincipal();
+
+        UtilisateurResponseDto utilisateur =
+                utilisateurService.obtenirParId(utilisateurConnecte.getId());
 
         return ResponseEntity.ok(utilisateur);
     }

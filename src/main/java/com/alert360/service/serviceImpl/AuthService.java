@@ -125,30 +125,62 @@ public class AuthService {
     }
 
 
+
     @Transactional
     public AuthResponseDto inscrireCitoyen(CitoyenRequestDto request) {
+        // 1. Vérifier si le téléphone est déjà utilisé
         if (utilisateurRepository.existsByTelephone(request.getTelephone())) {
-            throw new IllegalArgumentException("Erreur : Ce numéro de téléphone est déjà utilisé !");
+            throw new IllegalArgumentException(
+                    "Erreur : Ce numéro de téléphone est déjà utilisé !"
+            );
         }
 
-        if (request.getEmail() != null && !request.getEmail().isBlank() && utilisateurRepository.existsByEmail(request.getEmail())) {
-            throw new IllegalArgumentException("Erreur : Cet email est déjà utilisé !");
+        // 2. Vérifier si l'email est déjà utilisé
+        if (request.getEmail() != null
+                && !request.getEmail().isBlank()
+                && utilisateurRepository.existsByEmail(request.getEmail())) {
+            throw new IllegalArgumentException(
+                    "Erreur : Cet email est déjà utilisé !"
+            );
         }
 
+        // 3. Créer le citoyen
         Citoyen citoyen = new Citoyen();
         citoyen.setNom(request.getNom());
         citoyen.setPrenom(request.getPrenom());
         citoyen.setTelephone(request.getTelephone());
         citoyen.setEmail(request.getEmail());
-        citoyen.setMotDePasse(passwordEncoder.encode(request.getMotDePasse()));
+        citoyen.setMotDePasse(
+                passwordEncoder.encode(request.getMotDePasse())
+        );
         citoyen.setQuartier(request.getQuartier());
         citoyen.setRole(EnumRole.CITOYEN);
         citoyen.setEstActif(true);
         citoyen.setPointScore(0);
 
+        // 4. Enregistrer le citoyen en base de données
         Citoyen citoyenSauve = citoyenRepository.save(citoyen);
 
+        // 5. Authentifier automatiquement le citoyen nouvellement créé
+        Authentication authentication =
+                authenticationManager.authenticate(
+                        new UsernamePasswordAuthenticationToken(
+                                request.getTelephone(),
+                                request.getMotDePasse()
+                        )
+                );
+
+        // 6. Enregistrer l'authentification dans le contexte de sécurité
+        SecurityContextHolder.getContext()
+                .setAuthentication(authentication);
+
+        // 7. Générer le token JWT
+        String jwt = jwtUtils.generateJwtToken(authentication);
+
+        // 8. Retourner les informations du citoyen avec son token
         return AuthResponseDto.builder()
+                .token(jwt)
+                .type("Bearer")
                 .idUtilisateur(citoyenSauve.getIdUtilisateur())
                 .nom(citoyenSauve.getNom())
                 .prenom(citoyenSauve.getPrenom())
@@ -159,4 +191,5 @@ public class AuthService {
                 .estActif(citoyenSauve.getEstActif())
                 .build();
     }
+
 }

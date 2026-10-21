@@ -2,6 +2,7 @@ package com.alert360.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -26,11 +27,12 @@ public class Actualite {
 
     private Boolean estUrgent = false;
 
+    // URL de l'image associée à l'actualité
+    @Column(length = 500)
+    private String imageUrl;
+
     private LocalDateTime datePublication;
 
-    // --- RELATION ---
-
-    // Auteur de l'actualité (Administrateur)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "auteur_id", nullable = false)
     private Admin auteur;
