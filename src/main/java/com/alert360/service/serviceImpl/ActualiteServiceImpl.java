@@ -1,16 +1,24 @@
+
 package com.alert360.service.serviceImpl;
 
 import com.alert360.controller.dto.ActualiteRequestDto;
 import com.alert360.controller.dto.ActualiteResponseDto;
 import com.alert360.entity.Actualite;
 import com.alert360.entity.Admin;
+import com.alert360.entity.Utilisateur;
+import com.alert360.entity.enums.EnumRole;
+import com.alert360.entity.enums.EnumTypeNotification;
 import com.alert360.mapper.Request.ActualiteRequestMapper;
 import com.alert360.mapper.Response.ActualiteResponseMapper;
 import com.alert360.repository.ActualiteRepository;
 import com.alert360.repository.AdminRepository;
+import com.alert360.repository.UtilisateurRepository;
 import com.alert360.security.services.UserDetailsCustom;
+import com.alert360.service.serviceInter.NotificationService;
 import com.alert360.service.serviceInter.ActualiteService;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,18 +34,25 @@ public class ActualiteServiceImpl implements ActualiteService {
     private final ActualiteRequestMapper actualiteRequestMapper;
     private final ActualiteResponseMapper actualiteResponseMapper;
 
+    // Dépendances pour les notifications
+    private final NotificationService notificationService;
+    private final UtilisateurRepository utilisateurRepository;
+
     // ==========================================
-    // METHODE PRIVEE DE RECUPERATION DE L'ADMIN CONNECTE
+    // RECUPERER L'ADMINISTRATEUR CONNECTE
     // ==========================================
     private Admin getAdminConnecte() {
-        UserDetailsCustom userDetails = (UserDetailsCustom) SecurityContextHolder
-                .getContext()
-                .getAuthentication()
-                .getPrincipal();
+
+        UserDetailsCustom userDetails =
+                (UserDetailsCustom) SecurityContextHolder
+                        .getContext()
+                        .getAuthentication()
+                        .getPrincipal();
 
         return adminRepository.findById(userDetails.getId())
                 .orElseThrow(() -> new RuntimeException(
-                        "Administrateur connecté introuvable avec l'id : " + userDetails.getId()
+                        "Administrateur connecté introuvable avec l'id : "
+                                + userDetails.getId()
                 ));
     }
 
@@ -48,20 +63,65 @@ public class ActualiteServiceImpl implements ActualiteService {
     @Transactional
     public ActualiteResponseDto publierActualite(ActualiteRequestDto dto) {
 
-        // 1. Récupérer l'administrateur actuellement connecté via le SecurityContext
+        // 1. Récupérer l'administrateur connecté
         Admin auteur = getAdminConnecte();
 
-        // 2. Transformer le DTO en Entity en lui associant l'auteur connecté
+        // 2. Transformer le DTO en entité
         Actualite actualite = actualiteRequestMapper.toEntity(dto, auteur);
-        actualite.setAuteur(auteur); // Double sécurité : s'assurer que l'auteur est associé
+        actualite.setAuteur(auteur);
 
-        // 3. Enregistrer dans la base de données
-        Actualite actualiteEnregistree = actualiteRepository.save(actualite);
+        // 3. Enregistrer l'actualité
+        Actualite actualiteEnregistree =
+                actualiteRepository.save(actualite);
 
-        // 4. Transformer Entity -> Response DTO (avec nomAdminAuteur et idAdminAuteur)
+        // 4. Notifier les citoyens actifs
+        notifierPublicationActualite(actualiteEnregistree);
+
+        // 5. Retourner le DTO de réponse
         return actualiteResponseMapper.toDto(actualiteEnregistree);
     }
 
+    // ==========================================
+    // NOTIFIER LA PUBLICATION D'UNE ACTUALITE
+    // ==========================================
+    private void notifierPublicationActualite(Actualite actualite) {
+
+        // Récupérer les utilisateurs ayant le rôle CITOYEN.
+        // NotificationService filtrera les comptes inactifs.
+        List<? extends Utilisateur> citoyens =
+                utilisateurRepository.findByRole(EnumRole.CITOYEN);
+
+        // Choisir le type de notification selon l'urgence
+        EnumTypeNotification typeNotification =
+                Boolean.TRUE.equals(actualite.getEstUrgent())
+                        ? EnumTypeNotification.ALERTE_URGENTE
+                        : EnumTypeNotification.NOUVELLE_ACTUALITE;
+
+        String titreNotification =
+                Boolean.TRUE.equals(actualite.getEstUrgent())
+                        ? "Alerte urgente"
+                        : "Nouvelle actualité";
+
+        String messageNotification =
+                Boolean.TRUE.equals(actualite.getEstUrgent())
+                        ? "Une alerte urgente vient d'être publiée : "
+                          + actualite.getTitre()
+                        : "Une nouvelle actualité est disponible : "
+                          + actualite.getTitre();
+
+        notificationService.notifierDestinataires(
+                citoyens,
+                typeNotification,
+                titreNotification,
+                messageNotification,
+                "ACTUALITE",
+                actualite.getIdActualite()
+        );
+    }
+
+    // ==========================================
+    // OBTENIR UNE ACTUALITE PAR SON ID
+    // ==========================================
     @Override
     @Transactional(readOnly = true)
     public ActualiteResponseDto obtenirActualiteParId(Long idActualite) {
@@ -79,18 +139,21 @@ public class ActualiteServiceImpl implements ActualiteService {
     // ==========================================
     @Override
     @Transactional
-    public ActualiteResponseDto modifierActualite(Long idActualite, ActualiteRequestDto dto) {
+    public ActualiteResponseDto modifierActualite(
+            Long idActualite,
+            ActualiteRequestDto dto
+    ) {
 
-        // 1. Rechercher l'actualité à modifier
+        // 1. Rechercher l'actualité
         Actualite actualite = actualiteRepository.findById(idActualite)
                 .orElseThrow(() -> new RuntimeException(
                         "Actualité introuvable avec l'id : " + idActualite
                 ));
 
-        // 2. Récupérer l'administrateur qui fait la modification (l'admin connecté)
+        // 2. Récupérer l'administrateur connecté
         Admin auteur = getAdminConnecte();
 
-        // 3. Mettre à jour les champs de l'actualité
+        // 3. Mettre à jour les champs
         actualite.setTitre(dto.getTitre());
         actualite.setCorpsTexte(dto.getCorpsTexte());
         actualite.setCommuneCible(dto.getCommuneCible());
@@ -99,9 +162,10 @@ public class ActualiteServiceImpl implements ActualiteService {
         actualite.setAuteur(auteur);
 
         // 4. Enregistrer les modifications
-        Actualite actualiteModifiee = actualiteRepository.save(actualite);
+        Actualite actualiteModifiee =
+                actualiteRepository.save(actualite);
 
-        // 5. Transformer Entity -> Response DTO
+        // 5. Retourner le DTO
         return actualiteResponseMapper.toDto(actualiteModifiee);
     }
 

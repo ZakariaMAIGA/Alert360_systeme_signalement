@@ -1,0 +1,21 @@
+
+package com.alert360.entity.enums;
+
+public enum EnumTypeNotification {
+
+    NOUVEAU_SIGNALEMENT,
+
+    CHANGEMENT_STATUT,
+
+    NOUVELLE_ACTUALITE,
+
+    ALERTE_URGENTE,
+
+    ATTRIBUTION_SIGNALEMENT,
+
+    NOUVEAU_CONTENU_EDUCATIF,
+
+    ABUS_SIGNALEMENT_DECLARE,
+
+    ABUS_SIGNALEMENT_CONFIRME
+}

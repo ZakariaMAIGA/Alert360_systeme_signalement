@@ -10,12 +10,14 @@ import com.alert360.entity.enums.EnumRole;
 import com.alert360.entity.enums.EnumStatut;
 import com.alert360.entity.enums.EnumStatutAbus;
 import com.alert360.entity.enums.EnumTypeAbus;
+import com.alert360.entity.enums.EnumTypeNotification;
 import com.alert360.mapper.Response.AbusResponseMapper;
 import com.alert360.repository.AbusRepository;
 import com.alert360.repository.SignalementRepository;
 import com.alert360.repository.UtilisateurRepository;
 import com.alert360.service.serviceInter.AbusService;
 import com.alert360.service.serviceInter.AbusUploadService;
+import com.alert360.service.serviceInter.NotificationService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
@@ -34,125 +36,305 @@ import java.util.Objects;
 @RequiredArgsConstructor
 @Transactional
 public class AbusServiceImpl implements AbusService {
+
     private final AbusRepository abusRepository;
     private final SignalementRepository signalementRepository;
     private final UtilisateurRepository utilisateurRepository;
     private final AbusResponseMapper responseMapper;
     private final AbusUploadService uploadService;
+    private final NotificationService notificationService;
 
     private Utilisateur utilisateurConnecte() {
-        String identifiant = SecurityContextHolder.getContext().getAuthentication().getName();
+        String identifiant = SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getName();
+
         return utilisateurRepository.findByTelephone(identifiant)
                 .or(() -> utilisateurRepository.findByEmail(identifiant))
-                .orElseThrow(() -> new EntityNotFoundException("Utilisateur connecté introuvable."));
+                .orElseThrow(() ->
+                        new EntityNotFoundException(
+                                "Utilisateur connecté introuvable."
+                        )
+                );
     }
 
     @Override
-    public AbusResponseDto classerCommeAbus(AbusRequestDto dto, MultipartFile pieceJointe) {
+    public AbusResponseDto classerCommeAbus(
+            AbusRequestDto dto,
+            MultipartFile pieceJointe
+    ) {
         Utilisateur utilisateur = utilisateurConnecte();
+
+        // Seul le responsable de structure peut déclarer un abus.
         AgentStructure agent = verifierResponsable(utilisateur);
-        Signalement signalement = signalementRepository.findById(dto.getIdSignalement())
-                .orElseThrow(() -> new EntityNotFoundException("Signalement introuvable."));
-        if (signalement.getStructureAssignee() == null ||
-                !Objects.equals(signalement.getStructureAssignee().getIdStructure(), agent.getStructure().getIdStructure())) {
-            throw new AccessDeniedException("Ce signalement ne relève pas de votre structure.");
-        }
-        if (signalement.getStatut() == EnumStatut.RESOLU || signalement.getAgentAssigne() != null) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "Un signalement résolu ou déjà attribué à un agent ne peut pas être classé comme abus."
+
+        Signalement signalement = signalementRepository
+                .findById(dto.getIdSignalement())
+                .orElseThrow(() ->
+                        new EntityNotFoundException(
+                                "Signalement introuvable."
+                        )
+                );
+
+        // Vérifier que le signalement relève de la structure du responsable.
+        if (signalement.getStructureAssignee() == null
+                || !Objects.equals(
+                signalement.getStructureAssignee().getIdStructure(),
+                agent.getStructure().getIdStructure()
+        )) {
+            throw new AccessDeniedException(
+                    "Ce signalement ne relève pas de votre structure."
             );
         }
-        if (abusRepository.existsBySignalement_IdSignalement(signalement.getIdSignalement())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Ce signalement est déjà classé comme abus.");
+
+        // Un signalement résolu ou déjà attribué ne peut pas être classé abusif.
+        if (signalement.getStatut() == EnumStatut.RESOLU
+                || signalement.getAgentAssigne() != null) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Un signalement résolu ou déjà attribué à un agent "
+                            + "ne peut pas être classé comme abus."
+            );
+        }
+
+        // Empêcher la déclaration multiple du même abus.
+        if (abusRepository.existsBySignalement_IdSignalement(
+                signalement.getIdSignalement()
+        )) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Ce signalement est déjà classé comme abus."
+            );
         }
 
         Abus abus = new Abus();
+
         abus.setSignalement(signalement);
         abus.setStructure(agent.getStructure());
         abus.setAgentClassement(agent);
         abus.setTypeAbus(dto.getTypeAbus());
+
         if (dto.getTypeAbus() == EnumTypeAbus.AUTRE) {
             String typePersonnalise = dto.getTypeAbusPersonnalise() == null
                     ? ""
                     : dto.getTypeAbusPersonnalise().trim();
+
             if (typePersonnalise.isEmpty()) {
-                throw new IllegalArgumentException("Veuillez préciser le type d’abus lorsque « Autre » est sélectionné.");
+                throw new IllegalArgumentException(
+                        "Veuillez préciser le type d’abus "
+                                + "lorsque « Autre » est sélectionné."
+                );
             }
+
             abus.setTypeAbusPersonnalise(typePersonnalise);
         } else {
             abus.setTypeAbusPersonnalise(null);
         }
+
         abus.setNiveauGravite(dto.getNiveauGravite());
         abus.setJustification(dto.getJustification().trim());
+
         if (pieceJointe != null && !pieceJointe.isEmpty()) {
-            abus.setPieceJointeUrl(uploadService.enregistrer(pieceJointe));
+            abus.setPieceJointeUrl(
+                    uploadService.enregistrer(pieceJointe)
+            );
         }
-        return responseMapper.toDto(abusRepository.save(abus));
+
+        // Enregistrer d'abord la déclaration d'abus.
+        Abus abusEnregistre = abusRepository.save(abus);
+
+        // Récupérer les administrateurs.
+        // La notification est envoyée au moment de la déclaration,
+        // et non lors de la confirmation ultérieure de l'abus.
+        List<Utilisateur> administrateursActifs =
+                utilisateurRepository.findByRole(EnumRole.ADMIN)
+                        .stream()
+                        .filter(admin ->
+                                Boolean.TRUE.equals(admin.getEstActif())
+                        )
+                        .toList();
+
+        String code = signalement.getCodeTrackingUnique() != null
+                ? signalement.getCodeTrackingUnique()
+                : String.valueOf(signalement.getIdSignalement());
+
+        // Notifier les administrateurs actifs uniquement.
+        notificationService.notifierDestinataires(
+                administrateursActifs,
+                EnumTypeNotification.ABUS_SIGNALEMENT_DECLARE,
+                "Signalement déclaré comme abus",
+                "Le signalement " + code
+                        + " a été déclaré comme abus par le responsable "
+                        + "de sa structure compétente.",
+                "ABUS",
+                abusEnregistre.getIdAbus()
+        );
+
+        return responseMapper.toDto(abusEnregistre);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<AbusResponseDto> obtenirLesAbus() {
         Utilisateur utilisateur = utilisateurConnecte();
+
         List<Abus> abus;
+
         if (utilisateur instanceof AgentStructure agent) {
-            abus = abusRepository.findByStructure_IdStructureOrderByDateClassementDesc(
-                    agent.getStructure().getIdStructure()
-            );
+            abus = abusRepository
+                    .findByStructure_IdStructureOrderByDateClassementDesc(
+                            agent.getStructure().getIdStructure()
+                    );
         } else if (utilisateur.getRole() == EnumRole.ADMIN) {
             abus = abusRepository.findAll();
         } else {
-            throw new AccessDeniedException("Vous n’avez pas accès aux abus.");
+            throw new AccessDeniedException(
+                    "Vous n’avez pas accès aux abus."
+            );
         }
-        return abus.stream().map(responseMapper::toDto).toList();
+
+        return abus.stream()
+                .map(responseMapper::toDto)
+                .toList();
     }
 
+
     @Override
-    public AbusResponseDto changerStatut(Long idAbus, EnumStatutAbus statut) {
+    public AbusResponseDto changerStatut(
+            Long idAbus,
+            EnumStatutAbus statut
+    ) {
         if (statut != EnumStatutAbus.CONFIRME) {
-            throw new IllegalArgumentException("Le seul changement de statut autorisé est la confirmation de l’abus.");
+            throw new IllegalArgumentException(
+                    "Le seul changement de statut autorisé est "
+                            + "la confirmation de l’abus."
+            );
         }
+
         Utilisateur utilisateur = utilisateurConnecte();
+
         Abus abus = abusRepository.findById(idAbus)
-                .orElseThrow(() -> new EntityNotFoundException("Abus introuvable."));
+                .orElseThrow(() ->
+                        new EntityNotFoundException("Abus introuvable.")
+                );
+
+        // Vérifier les droits du responsable ou de l'administrateur.
+        boolean confirmationParResponsable =
+                utilisateur instanceof AgentStructure;
+
         if (utilisateur instanceof AgentStructure agent) {
-            if (!Boolean.TRUE.equals(agent.getEstResponsable()) ||
-                    !Objects.equals(agent.getStructure().getIdStructure(), abus.getStructure().getIdStructure())) {
-                throw new AccessDeniedException("Seul le responsable de la structure concernée peut confirmer cet abus.");
+            if (!Boolean.TRUE.equals(agent.getEstResponsable())
+                    || agent.getStructure() == null
+                    || abus.getStructure() == null
+                    || !Objects.equals(
+                    agent.getStructure().getIdStructure(),
+                    abus.getStructure().getIdStructure()
+            )) {
+                throw new AccessDeniedException(
+                        "Seul le responsable de la structure concernée "
+                                + "peut confirmer cet abus."
+                );
             }
         } else if (utilisateur.getRole() != EnumRole.ADMIN) {
-            throw new AccessDeniedException("Vous n’avez pas le droit de modifier le statut de cet abus.");
+            throw new AccessDeniedException(
+                    "Vous n’avez pas le droit de modifier le statut de cet abus."
+            );
         }
-        abus.getSignalement().setStatut(EnumStatut.REJETE);
-        abus.setStatut(statut);
-        signalementRepository.save(abus.getSignalement());
-        return responseMapper.toDto(abusRepository.save(abus));
+
+        // Empêcher une seconde confirmation et une notification en double.
+        if (abus.getStatut() == EnumStatutAbus.CONFIRME) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Cet abus a déjà été confirmé."
+            );
+        }
+
+        Signalement signalement = abus.getSignalement();
+
+        // Mettre à jour le signalement et l'abus.
+        signalement.setStatut(EnumStatut.REJETE);
+        abus.setStatut(EnumStatutAbus.CONFIRME);
+
+        signalementRepository.save(signalement);
+
+        Abus abusEnregistre = abusRepository.save(abus);
+
+        // Notifier les administrateurs actifs uniquement lorsque
+        // la confirmation est effectuée par le responsable de structure.
+        if (confirmationParResponsable) {
+
+            List<Utilisateur> administrateursActifs =
+                    utilisateurRepository.findByRole(EnumRole.ADMIN)
+                            .stream()
+                            .filter(admin ->
+                                    Boolean.TRUE.equals(admin.getEstActif())
+                            )
+                            .toList();
+
+            String code = signalement.getCodeTrackingUnique() != null
+                    ? signalement.getCodeTrackingUnique()
+                    : String.valueOf(signalement.getIdSignalement());
+
+            notificationService.notifierDestinataires(
+                    administrateursActifs,
+                    EnumTypeNotification.ABUS_SIGNALEMENT_CONFIRME,
+                    "Abus confirmé par la structure compétente",
+                    "Le responsable de la structure compétente a confirmé "
+                            + "l’abus concernant le signalement "
+                            + code + ".",
+                    "ABUS",
+                    abusEnregistre.getIdAbus()
+            );
+        }
+
+        return responseMapper.toDto(abusEnregistre);
     }
+
 
     @Override
     @Transactional(readOnly = true)
     public Resource obtenirPieceJointe(Long idAbus) {
         Utilisateur utilisateur = utilisateurConnecte();
+
         Abus abus = abusRepository.findById(idAbus)
-                .orElseThrow(() -> new EntityNotFoundException("Abus introuvable."));
+                .orElseThrow(() ->
+                        new EntityNotFoundException("Abus introuvable.")
+                );
+
         if (utilisateur instanceof AgentStructure agent) {
-            if (!Objects.equals(agent.getStructure().getIdStructure(), abus.getStructure().getIdStructure())) {
-                throw new AccessDeniedException("Cette pièce justificative ne relève pas de votre structure.");
+            if (!Objects.equals(
+                    agent.getStructure().getIdStructure(),
+                    abus.getStructure().getIdStructure()
+            )) {
+                throw new AccessDeniedException(
+                        "Cette pièce justificative ne relève pas "
+                                + "de votre structure."
+                );
             }
         } else if (utilisateur.getRole() != EnumRole.ADMIN) {
-            throw new AccessDeniedException("Vous n’avez pas accès à cette pièce justificative.");
+            throw new AccessDeniedException(
+                    "Vous n’avez pas accès à cette pièce justificative."
+            );
         }
+
         if (abus.getPieceJointeUrl() == null) {
-            throw new EntityNotFoundException("Cet abus ne comporte aucune pièce justificative.");
+            throw new EntityNotFoundException(
+                    "Cet abus ne comporte aucune pièce justificative."
+            );
         }
+
         return uploadService.charger(abus.getPieceJointeUrl());
     }
 
     private AgentStructure verifierResponsable(Utilisateur utilisateur) {
-        if (!(utilisateur instanceof AgentStructure agent) || !Boolean.TRUE.equals(agent.getEstResponsable())) {
-            throw new AccessDeniedException("Seul un responsable de structure peut classer un abus.");
+        if (!(utilisateur instanceof AgentStructure agent)
+                || !Boolean.TRUE.equals(agent.getEstResponsable())) {
+            throw new AccessDeniedException(
+                    "Seul un responsable de structure peut classer un abus."
+            );
         }
+
         return agent;
     }
 }
