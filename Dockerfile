@@ -30,4 +30,4 @@ ENV PORT=8080
 EXPOSE ${PORT}
 
 # Lancer l'application avec la syntaxe JSON correcte (avec guillemets)
-ENTRYPOINT ["sh", "-c", "java -jar alert360.jar --server.port=${PORT}"]
+ENTRYPOINT ["sh", "-c", "java -jar alert360.jar --server.port=${PORT:8080}"]
