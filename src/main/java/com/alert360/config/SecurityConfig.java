@@ -177,6 +177,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/actualites/**", "/api/contenus/**", "/api/categories/**")
                         .hasAnyAuthority("ADMIN", "ROLE_ADMIN")
 
+                        // NOTIFICATIONS
+                        .requestMatchers("/api/notifications/**")
+                        .authenticated()
+
                         // 10. ADMINISTRATION
                         .requestMatchers("/api/admin/**", "/api/utilisateurs/**")
                         .hasAnyAuthority("ADMIN", "ROLE_ADMIN")
