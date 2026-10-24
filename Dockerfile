@@ -26,7 +26,7 @@ COPY --from=build /alert360/target/*.jar alert360.jar
 
 # Configuration du port (5151 par défaut, ou celui imposé dynamiquement par Render)
 
-ENV PORT=8080
+ENV PORT=10000
 EXPOSE ${PORT}
 
 # Lancer l'application avec la syntaxe JSON correcte (avec guillemets)
