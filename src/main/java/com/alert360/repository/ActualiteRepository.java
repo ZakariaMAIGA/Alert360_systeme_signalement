@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface ActualiteRepository extends JpaRepository<Actualite, Long> {
+public interface  ActualiteRepository extends JpaRepository<Actualite, Long> {
 
     // Actualités récentes triées par date de publication décroissante
     List<Actualite> findAllByOrderByDatePublicationDesc();

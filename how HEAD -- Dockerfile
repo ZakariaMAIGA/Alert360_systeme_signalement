@@ -1,0 +1,62 @@
+[33mcommit ca86f835da010554d93bc9e331071334a13d9e64[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mDope[m[33m)[m
+Author: AbdoulayeDemb <abdoulayedembadiallo288@gmail.com>
+Date:   Sat Oct 24 01:00:18 2026 +0000
+
+    Configure Alert360 for Render and Supabase
+
+[1mdiff --git a/.gitignore b/.gitignore[m
+[1mindex 22ba420..493da12 100644[m
+[1m--- a/.gitignore[m
+[1m+++ b/.gitignore[m
+[36m@@ -19,6 +19,8 @@[m [mtarget/[m
+ *.iml[m
+ *.ipr[m
+ .env[m
+[32m+[m[32m.env.*[m
+[32m+[m[32m!.env.example[m
+ [m
+ ### NetBeans ###[m
+ /nbproject/private/[m
+[1mdiff --git a/Dockerfile b/Dockerfile[m
+[1mindex 28aac73..bca867e 100644[m
+[1m--- a/Dockerfile[m
+[1m+++ b/Dockerfile[m
+[36m@@ -26,7 +26,7 @@[m [mCOPY --from=build /alert360/target/*.jar alert360.jar[m
+ [m
+ # Configuration du port (5151 par défaut, ou celui imposé dynamiquement par Render)[m
+ [m
+[31m-ENV PORT=8080[m
+[32m+[m[32mENV PORT=10000[m
+ EXPOSE ${PORT}[m
+ [m
+ # Lancer l'application avec la syntaxe JSON correcte (avec guillemets)[m
+[1mdiff --git a/src/main/resources/application.properties b/src/main/resources/application.properties[m
+[1mindex 2b69468..7c8f472 100644[m
+[1m--- a/src/main/resources/application.properties[m
+[1m+++ b/src/main/resources/application.properties[m
+[36m@@ -8,20 +8,20 @@[m [mspring.servlet.multipart.max-file-size=10MB[m
+ spring.servlet.multipart.max-request-size=12MB[m
+ [m
+ # Base de données PostgreSQL[m
+[31m-spring.datasource.url=jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}[m
+[32m+[m[32mspring.datasource.url=${DATABASE_URL}[m
+ spring.datasource.username=${DB_USERNAME}[m
+ spring.datasource.password=${DB_PASSWORD}[m
+[31m-#spring.datasource.driver-class-name=org.postgresql.Driver[m
+[32m+[m[32mspring.datasource.driver-class-name=org.postgresql.Driver[m
+ [m
+ # Configuration Hibernate / JPA[m
+ spring.jpa.hibernate.ddl-auto=update[m
+[31m-spring.jpa.show-sql=true[m
+[32m+[m[32mspring.jpa.show-sql=false[m
+ spring.jpa.properties.hibernate.format_sql=true[m
+ spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect[m
+ [m
+ # Logs de sécurité[m
+[31m-logging.level.org.springframework.security=TRACE[m
+[31m-logging.level.com.alert360.security=DEBUG[m
+[32m+[m[32mlogging.level.org.springframework.security=INFO[m
+[32m+[m[32mlogging.level.com.alert360.security=INFO[m
+ [m
+ # Configuration JWT[m
+ alert360.app.jwtSecret=Alert360SuperSecretKeyForJWTTokenGeneration2026WithHS256BitEncoding[m
