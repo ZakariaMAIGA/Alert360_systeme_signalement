@@ -315,34 +315,57 @@ public class SignalementServiceImpl implements SignalementService {
         return responseMapper.toDto(signalementModifie);
     }
 
+
     /**
-     * Informe le citoyen lorsque le statut de son signalement change.
+     * Informe le citoyen du changement de statut.
+     * Informe également l'agent de terrain lorsque la résolution est validée.
      */
     private void notifierChangementStatut(
             Signalement signalement,
             EnumStatut ancienStatut,
             EnumStatut nouveauStatut) {
 
-        Citoyen citoyen = signalement.getCitoyen();
-
-        if (citoyen == null) {
-            return;
-        }
-
         String code = signalement.getCodeTrackingUnique() != null
                 ? signalement.getCodeTrackingUnique()
                 : String.valueOf(signalement.getIdSignalement());
 
-        notificationService.creerNotification(
-                citoyen,
-                EnumTypeNotification.CHANGEMENT_STATUT,
-                "Mise à jour de votre signalement",
-                "Le statut de votre signalement " + code
-                        + " est passé de " + ancienStatut
-                        + " à " + nouveauStatut + ".",
-                "SIGNALEMENT",
-                signalement.getIdSignalement()
-        );
+        // 1. Notifier le citoyen du changement de statut.
+        Citoyen citoyen = signalement.getCitoyen();
+
+        if (citoyen != null) {
+            notificationService.creerNotification(
+                    citoyen,
+                    EnumTypeNotification.CHANGEMENT_STATUT,
+                    "Mise à jour de votre signalement",
+                    "Le statut de votre signalement " + code
+                            + " est passé de " + ancienStatut
+                            + " à " + nouveauStatut + ".",
+                    "SIGNALEMENT",
+                    signalement.getIdSignalement()
+            );
+        }
+
+        // 2. Si la résolution vient d'être validée,
+        // notifier l'agent qui a réellement soumis la preuve.
+        if (ancienStatut == EnumStatut.EN_COURS
+                && nouveauStatut == EnumStatut.RESOLU
+                && signalement.getPreuveResolution() != null) {
+
+            AgentStructure agentEmetteur =
+                    signalement.getPreuveResolution().getAgentEmetteur();
+
+            if (agentEmetteur != null) {
+                notificationService.creerNotification(
+                        agentEmetteur,
+                        EnumTypeNotification.CHANGEMENT_STATUT,
+                        "Résolution validée",
+                        "La preuve que vous avez soumise pour le signalement "
+                                + code + " a été validée. Le signalement est maintenant résolu.",
+                        "SIGNALEMENT",
+                        signalement.getIdSignalement()
+                );
+            }
+        }
     }
 
     // ==========================================================

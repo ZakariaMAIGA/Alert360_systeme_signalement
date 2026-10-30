@@ -7,11 +7,14 @@ import com.alert360.entity.PreuveResolution;
 import com.alert360.entity.Signalement;
 import com.alert360.entity.Utilisateur;
 import com.alert360.entity.enums.EnumRole;
+import com.alert360.entity.enums.EnumTypeNotification;
 import com.alert360.mapper.Request.PreuveResolutionRequestMapper;
 import com.alert360.mapper.Response.PreuveResolutionResponseMapper;
+import com.alert360.repository.AgentStructureRepository;
 import com.alert360.repository.PreuveResolutionRepository;
 import com.alert360.repository.SignalementRepository;
 import com.alert360.repository.UtilisateurRepository;
+import com.alert360.service.serviceInter.NotificationService;
 import com.alert360.service.serviceInter.PreuveResolutionService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +36,8 @@ public class PreuveResolutionServiceImpl implements PreuveResolutionService {
     private final UtilisateurRepository utilisateurRepository;
     private final PreuveResolutionRequestMapper requestMapper;
     private final PreuveResolutionResponseMapper responseMapper;
-
+    private final AgentStructureRepository agentStructureRepository;
+    private final NotificationService notificationService;
     /**
      * Extrait l'identifiant du token JWT (Téléphone ou Email)
      * et récupère l'entité Utilisateur correspondante.
@@ -71,32 +75,122 @@ public class PreuveResolutionServiceImpl implements PreuveResolutionService {
     }
 
     @Override
-    public PreuveResolutionResponseDto ajouterPreuveResolution(PreuveResolutionRequestDto dto) {
+    public PreuveResolutionResponseDto ajouterPreuveResolution(
+            PreuveResolutionRequestDto dto) {
+
+        System.out.println("\n========== DEBUG PREUVE DE RÉSOLUTION ==========");
+
         Utilisateur utilisateurConnecte = getUtilisateurConnecte();
 
-        Signalement signalement = signalementRepository.findById(dto.getIdSignalement())
-                .orElseThrow(() -> new EntityNotFoundException("Signalement introuvable avec l'ID : " + dto.getIdSignalement()));
+        System.out.println("Utilisateur connecté : "
+                + utilisateurConnecte.getIdUtilisateur());
+        System.out.println("Rôle utilisateur : "
+                + utilisateurConnecte.getRole());
+        System.out.println("Type utilisateur : "
+                + utilisateurConnecte.getClass().getSimpleName());
 
-        // 1. VERIFICATION DE LA PERMISSION
-        verifierHabilitationAgent(utilisateurConnecte, signalement);
+        Signalement signalement = signalementRepository
+                .findById(dto.getIdSignalement())
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Signalement introuvable avec l'ID : "
+                                + dto.getIdSignalement()));
 
-        // 2. VERIFICATION D'UNICITÉ DE LA PREUVE
-        if (preuveResolutionRepository.findBySignalementIdSignalement(dto.getIdSignalement()).isPresent()) {
-            throw new IllegalArgumentException("Une preuve de résolution existe déjà pour le signalement n° " + dto.getIdSignalement());
+        System.out.println("ID signalement : "
+                + signalement.getIdSignalement());
+        System.out.println("Code tracking : "
+                + signalement.getCodeTrackingUnique());
+
+        // Vérification des permissions
+        if (utilisateurConnecte instanceof AgentStructure agent) {
+
+            System.out.println("ID agent connecté : "
+                    + agent.getIdUtilisateur());
+            System.out.println("Est responsable : "
+                    + agent.getEstResponsable());
+
+            if (agent.getStructure() != null) {
+                System.out.println("ID structure de l'agent : "
+                        + agent.getStructure().getIdStructure());
+            } else {
+                System.out.println("L'agent n'est rattaché à aucune structure.");
+            }
+
+            if (signalement.getAgentAssigne() != null) {
+                System.out.println("ID agent assigné au signalement : "
+                        + signalement.getAgentAssigne().getIdUtilisateur());
+            } else {
+                System.out.println("Aucun agent assigné au signalement.");
+            }
+
+            if (signalement.getStructureAssignee() != null) {
+                System.out.println("ID structure assignée au signalement : "
+                        + signalement.getStructureAssignee().getIdStructure());
+            } else {
+                System.out.println("Aucune structure assignée au signalement.");
+            }
         }
 
-        // 3. CREATION ET LIAISON
+        System.out.println("Vérification des habilitations...");
+        verifierHabilitationAgent(utilisateurConnecte, signalement);
+        System.out.println("Habilitations validées.");
+
+        // Vérification de l'unicité de la preuve
+        if (preuveResolutionRepository
+                .findBySignalementIdSignalement(dto.getIdSignalement())
+                .isPresent()) {
+
+            System.out.println("ERREUR : une preuve existe déjà.");
+
+            throw new IllegalArgumentException(
+                    "Une preuve de résolution existe déjà pour le signalement n° "
+                            + dto.getIdSignalement());
+        }
+
+        // Création et liaison
         PreuveResolution preuve = requestMapper.toEntity(dto, signalement);
+
         if (utilisateurConnecte instanceof AgentStructure agentEmetteur) {
             preuve.setAgentEmetteur(agentEmetteur);
         }
+
         PreuveResolution savedPreuve = preuveResolutionRepository.save(preuve);
 
         signalement.setPreuveResolution(savedPreuve);
         signalementRepository.save(signalement);
 
+        System.out.println("Preuve enregistrée avec succès : "
+                + savedPreuve.getIdPreuve());
+
+        // Notification des responsables de la structure
+        if (signalement.getStructureAssignee() != null) {
+
+            Long idStructure =
+                    signalement.getStructureAssignee().getIdStructure();
+
+            List<AgentStructure> responsables =
+                    agentStructureRepository
+                            .findByStructureIdStructureAndEstResponsableTrue(
+                                    idStructure);
+
+            System.out.println("Nombre de responsables à notifier : "
+                    + responsables.size());
+
+            notificationService.notifierDestinataires(
+                    responsables,
+                    EnumTypeNotification.PREUVE_RESOLUTION_SOUMISE,
+                    "Nouvelle preuve de résolution",
+                    "Une preuve a été soumise pour le signalement "
+                            + signalement.getCodeTrackingUnique()
+                            + ". Veuillez la consulter et valider la résolution.",
+                    "SIGNALEMENT",
+                    signalement.getIdSignalement());
+        }
+
+        System.out.println("========== FIN DEBUG PREUVE ==========\n");
+
         return responseMapper.toDto(savedPreuve);
     }
+
 
     @Override
     public PreuveResolutionResponseDto modifierPreuveResolution(Long idPreuve, PreuveResolutionRequestDto dto) {
