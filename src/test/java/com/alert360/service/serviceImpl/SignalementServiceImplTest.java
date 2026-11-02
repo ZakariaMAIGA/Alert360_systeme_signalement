@@ -3,10 +3,12 @@ package com.alert360.service.serviceImpl;
 import com.alert360.controller.dto.AssignationSignalementRequestDto;
 import com.alert360.controller.dto.SignalementResponseDto;
 import com.alert360.entity.AgentStructure;
+import com.alert360.entity.PreuveResolution;
 import com.alert360.entity.Signalement;
 import com.alert360.entity.StructureCompetente;
 import com.alert360.entity.Utilisateur;
 import com.alert360.entity.enums.EnumStatut;
+import com.alert360.entity.enums.EnumTypeNotification;
 import com.alert360.mapper.Request.SignalementRequestMapper;
 import com.alert360.mapper.Response.SignalementResponseMapper;
 import com.alert360.repository.AbusRepository;
@@ -16,6 +18,7 @@ import com.alert360.repository.CitoyenRepository;
 import com.alert360.repository.SignalementRepository;
 import com.alert360.repository.StructureCompetenteRepository;
 import com.alert360.repository.UtilisateurRepository;
+import com.alert360.service.serviceInter.NotificationService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -44,6 +47,7 @@ class SignalementServiceImplTest {
     @Mock private UtilisateurRepository utilisateurRepository;
     @Mock private SignalementRequestMapper requestMapper;
     @Mock private SignalementResponseMapper responseMapper;
+    @Mock private NotificationService notificationService;
 
     @InjectMocks
     private SignalementServiceImpl service;
@@ -66,6 +70,62 @@ class SignalementServiceImplTest {
 
         verify(signalement).setStatut(EnumStatut.RESOLU);
         verify(signalementRepository).save(signalement);
+    }
+
+    @Test
+    void notifiesAssignedAgentWhenResponsibleValidatesProof() {
+        AgentStructure responsible = agent(5L, true);
+        AgentStructure fieldAgent = mock(AgentStructure.class);
+        when(fieldAgent.getEstActif()).thenReturn(true);
+        authenticate(responsible);
+        Signalement signalement = signalement(5L);
+        when(signalement.getIdSignalement()).thenReturn(20L);
+        when(signalement.getStatut()).thenReturn(EnumStatut.EN_COURS);
+        when(signalement.getCodeTrackingUnique()).thenReturn("ALT-12345678");
+        when(signalement.getAgentAssigne()).thenReturn(fieldAgent);
+        when(signalement.getPreuveResolution()).thenReturn(mock(PreuveResolution.class));
+        when(signalementRepository.findById(20L)).thenReturn(Optional.of(signalement));
+        when(signalementRepository.save(signalement)).thenReturn(signalement);
+        when(responseMapper.toDto(signalement)).thenReturn(new SignalementResponseDto());
+
+        service.changerStatut(20L, EnumStatut.RESOLU);
+
+        verify(notificationService).creerNotification(
+                fieldAgent,
+                EnumTypeNotification.PREUVE_VALIDEE,
+                "Preuve validée",
+                "Votre preuve pour le signalement ALT-12345678 a été validée par votre responsable.",
+                "SIGNALEMENT",
+                20L
+        );
+    }
+
+    @Test
+    void notifiesAssignedAgentWhenResponsibleRejectsProof() {
+        AgentStructure responsible = agent(5L, true);
+        AgentStructure fieldAgent = mock(AgentStructure.class);
+        when(fieldAgent.getEstActif()).thenReturn(true);
+        authenticate(responsible);
+        Signalement signalement = signalement(5L);
+        when(signalement.getIdSignalement()).thenReturn(20L);
+        when(signalement.getStatut()).thenReturn(EnumStatut.EN_COURS);
+        when(signalement.getCodeTrackingUnique()).thenReturn("ALT-12345678");
+        when(signalement.getAgentAssigne()).thenReturn(fieldAgent);
+        when(signalement.getPreuveResolution()).thenReturn(mock(PreuveResolution.class));
+        when(signalementRepository.findById(20L)).thenReturn(Optional.of(signalement));
+        when(signalementRepository.save(signalement)).thenReturn(signalement);
+        when(responseMapper.toDto(signalement)).thenReturn(new SignalementResponseDto());
+
+        service.changerStatut(20L, EnumStatut.REJETE);
+
+        verify(notificationService).creerNotification(
+                fieldAgent,
+                EnumTypeNotification.PREUVE_REJETEE,
+                "Preuve rejetée",
+                "Votre preuve pour le signalement ALT-12345678 a été rejetée par votre responsable.",
+                "SIGNALEMENT",
+                20L
+        );
     }
 
     @Test

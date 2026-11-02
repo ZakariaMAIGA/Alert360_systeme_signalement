@@ -310,6 +310,7 @@ public class SignalementServiceImpl implements SignalementService {
                     ancienStatut,
                     nouveauStatut
             );
+            notifierDecisionPreuve(signalementModifie, nouveauStatut);
         }
 
         return responseMapper.toDto(signalementModifie);
@@ -340,6 +341,47 @@ public class SignalementServiceImpl implements SignalementService {
                 "Le statut de votre signalement " + code
                         + " est passé de " + ancienStatut
                         + " à " + nouveauStatut + ".",
+                "SIGNALEMENT",
+                signalement.getIdSignalement()
+        );
+    }
+
+    /**
+     * Informe l'agent assigné de la décision du responsable sur sa preuve.
+     */
+    private void notifierDecisionPreuve(
+            Signalement signalement,
+            EnumStatut nouveauStatut) {
+
+        if (nouveauStatut != EnumStatut.RESOLU
+                && nouveauStatut != EnumStatut.REJETE) {
+            return;
+        }
+
+        AgentStructure agent = signalement.getAgentAssigne();
+
+        if (agent == null
+                || !Boolean.TRUE.equals(agent.getEstActif())
+                || signalement.getPreuveResolution() == null) {
+            return;
+        }
+
+        boolean preuveValidee = nouveauStatut == EnumStatut.RESOLU;
+        String code = signalement.getCodeTrackingUnique() != null
+                ? signalement.getCodeTrackingUnique()
+                : String.valueOf(signalement.getIdSignalement());
+
+        notificationService.creerNotification(
+                agent,
+                preuveValidee
+                        ? EnumTypeNotification.PREUVE_VALIDEE
+                        : EnumTypeNotification.PREUVE_REJETEE,
+                preuveValidee ? "Preuve validée" : "Preuve rejetée",
+                preuveValidee
+                        ? "Votre preuve pour le signalement " + code
+                                + " a été validée par votre responsable."
+                        : "Votre preuve pour le signalement " + code
+                                + " a été rejetée par votre responsable.",
                 "SIGNALEMENT",
                 signalement.getIdSignalement()
         );
