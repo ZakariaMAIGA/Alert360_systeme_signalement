@@ -7,6 +7,7 @@ import com.alert360.entity.PreuveResolution;
 import com.alert360.entity.Signalement;
 import com.alert360.entity.Utilisateur;
 import com.alert360.entity.enums.EnumRole;
+import com.alert360.entity.enums.EnumStatut;
 import com.alert360.mapper.Request.PreuveResolutionRequestMapper;
 import com.alert360.mapper.Response.PreuveResolutionResponseMapper;
 import com.alert360.repository.PreuveResolutionRepository;
@@ -123,6 +124,7 @@ public class PreuveResolutionServiceImpl implements PreuveResolutionService {
     public PreuveResolutionResponseDto obtenirParId(Long idPreuve) {
         PreuveResolution preuve = preuveResolutionRepository.findById(idPreuve)
                 .orElseThrow(() -> new EntityNotFoundException("Preuve de résolution introuvable avec l'ID : " + idPreuve));
+        verifierAccesLectureCitoyen(getUtilisateurConnecte(), preuve.getSignalement());
         return responseMapper.toDto(preuve);
     }
 
@@ -131,7 +133,29 @@ public class PreuveResolutionServiceImpl implements PreuveResolutionService {
     public PreuveResolutionResponseDto obtenirParSignalement(Long idSignalement) {
         PreuveResolution preuve = preuveResolutionRepository.findBySignalementIdSignalement(idSignalement)
                 .orElseThrow(() -> new EntityNotFoundException("Aucune preuve de résolution enregistrée pour le signalement ID : " + idSignalement));
+        verifierAccesLectureCitoyen(getUtilisateurConnecte(), preuve.getSignalement());
         return responseMapper.toDto(preuve);
+    }
+
+    /**
+     * Un citoyen ne peut consulter que la preuve d'un de ses signalements résolus.
+     * Les permissions existantes des agents, responsables et administrateurs restent inchangées.
+     */
+    private void verifierAccesLectureCitoyen(Utilisateur utilisateurConnecte, Signalement signalement) {
+        if (utilisateurConnecte.getRole() != EnumRole.CITOYEN) {
+            return;
+        }
+
+        if (signalement == null
+                || signalement.getCitoyen() == null
+                || !utilisateurConnecte.getIdUtilisateur()
+                        .equals(signalement.getCitoyen().getIdUtilisateur())) {
+            throw new AccessDeniedException("Vous ne pouvez consulter que les preuves de vos signalements.");
+        }
+
+        if (signalement.getStatut() != EnumStatut.RESOLU) {
+            throw new AccessDeniedException("La preuve est accessible après la résolution du signalement.");
+        }
     }
 
     @Override
